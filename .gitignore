@@ -1,0 +1,5 @@
+/dist/
+/local/
+*.bak
+*.tdy
+__pycache__/

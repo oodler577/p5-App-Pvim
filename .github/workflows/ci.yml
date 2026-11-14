@@ -1,0 +1,94 @@
+name: Portability and release
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  perl:
+    name: ${{ matrix.os }} Perl ${{ matrix.perl }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        perl: ['5.10', '5.16', '5.24', '5.32', '5.40', '5.42']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+      - name: Syntax, POD and complete core-only suite
+        run: |
+          perl -c pvim
+          perl -MPod::Checker -e "exit podchecker('pvim')"
+          prove -v t
+      - name: POSIX terminal integration
+        if: runner.os != 'Windows'
+        run: python3 tools/pty_test.py
+      - name: Bounded-memory storage benchmark
+        if: runner.os == 'Linux' && matrix.perl == '5.10'
+        run: /usr/bin/time -v perl tools/benchmark.pl 128
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.40'
+      - run: cpanm --notest Perl::Tidy
+      - run: prove -v t/04-tidy.t
+  minimal-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:bookworm-slim', 'alpine:3.22', 'ubuntu:24.04', 'fedora:43']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Core-only distro Perl, unprivileged tests
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          case "$IMAGE" in
+            alpine:*) setup='apk add --no-cache perl perl-test-simple perl-pod-parser' ;;
+            fedora:*) setup='dnf -y install perl perl-Test-Simple perl-Pod-Usage perl-Digest-SHA perl-Archive-Tar perl-Pod-Checker' ;;
+            *) setup='apt-get update && apt-get install -y --no-install-recommends perl' ;;
+          esac
+          docker run --rm -v "$PWD:/src:ro" "$IMAGE" sh -c "$setup && su nobody -s /bin/sh -c 'cd /src && prove t'"
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [perl, tidy, minimal-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tag matches embedded version
+        run: |
+          version=$(perl pvim --version | cut -d' ' -f2)
+          test "${GITHUB_REF_NAME}" = "v${version}"
+      - run: perl tools/release.pl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvim-release
+          path: dist/*
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const tag = context.ref.replace('refs/tags/', '');
+            const release = await github.rest.repos.createRelease({
+              ...context.repo, tag_name: tag, name: `pvim ${tag} — human testing`,
+              prerelease: true, generate_release_notes: false,
+              body: fs.readFileSync('docs/RELEASE_NOTES.md', 'utf8')
+            });
+            for (const name of fs.readdirSync('dist')) {
+              await github.rest.repos.uploadReleaseAsset({
+                ...context.repo, release_id: release.data.id, name,
+                data: fs.readFileSync(`dist/${name}`)
+              });
+            }
