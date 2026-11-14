@@ -54,8 +54,8 @@ jobs:
           IMAGE: ${{ matrix.image }}
         run: |
           case "$IMAGE" in
-            alpine:*) setup='apk add --no-cache perl perl-test-simple perl-pod-parser' ;;
-            fedora:*) setup='dnf -y install perl perl-Test-Simple perl-Pod-Usage perl-Digest-SHA perl-Archive-Tar perl-Pod-Checker' ;;
+            alpine:*) setup='apk add --no-cache perl perl-test-simple perl-pod-parser perl-test-harness-utils' ;;
+            fedora:*) setup='dnf -y install util-linux-user perl perl-Test-Simple perl-Pod-Usage perl-Digest-SHA perl-Archive-Tar perl-Pod-Checker' ;;
             *) setup='apt-get update && apt-get install -y --no-install-recommends perl' ;;
           esac
           docker run --rm -v "$PWD:/src:ro" "$IMAGE" sh -c "$setup && su nobody -s /bin/sh -c 'cd /src && prove t'"

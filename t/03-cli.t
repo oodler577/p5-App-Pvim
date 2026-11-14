@@ -18,5 +18,6 @@ is(system($^X,$pvim,'--version'),0,'version');
 is(system($^X,$pvim,'--help'),0,'help');
 is(system($^X,$pvim,'--manual'),0,'manual without perldoc');
 # Invoke via pipe so accidental interactive startup fails promptly.
-open my $pipe,'-|',$^X,$pvim,$file or die $!; my @output=<$pipe>; close $pipe; ok($?!=0,'no tty rejected');
+if ($^O eq 'MSWin32') { ok(system($^X,$pvim,$file)!=0,'native Windows UI rejected') }
+else { open my $pipe,'-|',$^X,$pvim,$file or die $!; my @output=<$pipe>; close $pipe; ok($?!=0,'no tty rejected') }
 done_testing;

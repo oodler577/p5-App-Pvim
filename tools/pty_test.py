@@ -52,7 +52,10 @@ class Session:
             self.proc.kill()
             self.proc.wait()
         self.drain(0.01)
-        restored = termios.tcgetattr(self.slave) == self.before
+        after = termios.tcgetattr(self.slave)
+        restored = after == self.before
+        if not restored:
+            print('TTY DIFF:', [(i, a, b) for i, (a, b) in enumerate(zip(self.before, after)) if a != b], file=sys.stderr)
         os.close(self.master)
         os.close(self.slave)
         return restored

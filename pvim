@@ -22,7 +22,7 @@ sub _seek { seek($_[0], $_[1], 0) or die "Temporary-file seek: $!\n" }
 sub _record {
     my ($s, $offset, $length, $term) = @_;
     my $id = $s->{next}++;
-    _seek($s->{index}, $id * 24);
+    _seek($s->{index}, $id * 24) unless tell($s->{index}) == $id * 24;
     print {$s->{index}} pack('d3', $offset, $length, $term) or die "Temporary index: $!\n";
     return $id;
 }
@@ -331,16 +331,24 @@ sub substitute {
     my $rx = eval { $spec =~ /i/ ? qr/$pattern/i : qr/$pattern/ }; die "Invalid regex: $@" if $@;
     my $changed = 0;
     $e->edit(sub {
+        my $b = $e->{b};
+        my @pieces = $b->slice(0,$lo);
         for my $r ($lo .. $hi) {
-            my $old = $e->{b}->line($r); my ($out,$end,$hits) = ('',0,0);
+            my $old = $b->line($r); my ($out,$end,$hits) = ('',0,0);
             while ($old =~ /$rx/g) {
                 my @starts = @-; my @ends = @+;
                 $out .= substr($old,$end,$starts[0]-$end) . replacement($replacement,$old,\@starts,\@ends);
                 $end = $ends[0]; ++$hits;
                 last unless $spec =~ /g/;
             }
-            if ($hits) { $out .= substr($old,$end); $e->{b}->set_line($r,$out) if $out ne $old; $changed += $hits }
+            $out .= substr($old,$end) if $hits;
+            my $id = $hits && $out ne $old ? $b->append($out,$b->term($r)) : $b->id($r);
+            if (@pieces && $pieces[-1][0]+$pieces[-1][1] == $id && ($b->record($id-1))[2]) { ++$pieces[-1][1] }
+            else { push @pieces, [$id,1] }
+            $changed += $hits;
         }
+        push @pieces, $b->slice($hi+1,$b->{count}-$hi-1);
+        $b->{pieces} = \@pieces; $b->reindex;
     });
     $e->{search} = $pattern;
     die "Pattern not found\n" unless $changed;

@@ -49,6 +49,8 @@ for my $step (1..1200) {
     $b->begin; $b->splice_lines($at,$del,map { $b->append($_) } @new); $b->commit;
     splice @oracle,$at,$del,@new; @oracle=('') unless @oracle;
     is_deeply([map { $b->line($_) } 0..$b->{count}-1],\@oracle,"splice oracle $step");
+    my $serialized=''; open my $out,'>',\$serialized or die $!; binmode $out; $b->write_to($out); close $out;
+    is($serialized,join("\n",@oracle)."\n","serialized oracle $step");
     if ($step%11==0) { my @after=@oracle; $b->undo; $b->undo(1); is_deeply([map { $b->line($_) } 0..$b->{count}-1],\@after,'undo/redo oracle') }
 }
 done_testing;
