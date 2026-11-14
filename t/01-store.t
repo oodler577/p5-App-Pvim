@@ -44,7 +44,7 @@ SKIP: {
 # A failed write must leave both the destination and dirty state intact.
 put(file('failure'),'original');
 {
-    no warnings 'redefine';
+    no warnings qw(redefine once);
     local *PVim::Store::write_to = sub { die "simulated write failure\n" };
     eval { $b->save(file('failure'),1) }; like($@,qr/simulated write failure/,'write failure reported');
 }

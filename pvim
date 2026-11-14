@@ -459,6 +459,7 @@ sub key {
     if ($e->{pending}) {
         my $op = $e->{pending}; $n *= $e->{opcount}; $e->{pending} = '';
         if ($op eq 'g' && $k eq 'g') { $e->{row} = $n-1; $e->{col} = 0; $e->clamp; return }
+        if ($op eq '\\' && $k eq 't') { $e->tidy; return }
         if ($op eq 'Z' && $k eq 'Z') { $e->ex('wq'); return }
         if ($op =~ /^[dyc]$/) {
             if ($k eq $op) {
@@ -503,7 +504,7 @@ sub key {
         }
         die "Unknown key sequence\n";
     }
-    if ($k =~ /^[dycrgZ]$/) { $e->{pending} = $k; $e->{opcount} = $n; return }
+    if ($k eq '\\' || $k =~ /^[dycrgZ]$/) { $e->{pending} = $k; $e->{opcount} = $n; return }
     if ($k eq 'h' || $k eq 'LEFT') { $e->{col} -= $n }
     elsif ($k eq 'l' || $k eq 'RIGHT') { $e->{col} += $n }
     elsif ($k eq 'j' || $k eq 'DOWN') { $e->{row} += $n }
@@ -622,6 +623,17 @@ sub cells {
     }
     push @positions, length($out); return ($out,\@positions);
 }
+sub display {
+    my ($text,$tabstop,$limit) = @_;
+    my $out = '';
+    while ($text =~ /([\x20-\x7e]+)|(\t)|([^\x20-\x7e])/g) {
+        if (defined $1) { $out .= defined($limit) ? substr($1,0,$limit-length($out)) : $1 }
+        elsif (defined $2) { $out .= ' ' x ($tabstop-length($out)%$tabstop) }
+        else { $out .= safe($3) }
+        last if defined($limit) && length($out) >= $limit;
+    }
+    return defined($limit) ? substr($out,0,$limit) : $out;
+}
 sub highlight {
     my ($text) = @_;
     # Bounded, single-line lexer. Deliberately no code execution or full Perl parser.
@@ -644,13 +656,13 @@ sub draw {
     $t->{top} = $e->{row}-$height+1 if $e->{row} >= $t->{top}+$height;
     my $gutter = $e->{number} ? length($b->{count})+1 : 0; $gutter = 0 if $gutter > $cols-4;
     my $width = $cols-$gutter-1;
-    my ($current,$positions) = cells($b->line($e->{row}),$e->{tabstop}); my $cx = $positions->[$e->{col}] || 0;
+    my $cx = length(display(substr($b->line($e->{row}),0,$e->{col}),$e->{tabstop},undef));
     $t->{left} = $cx if $cx < $t->{left}; $t->{left} = $cx-$width+1 if $cx >= $t->{left}+$width;
     my @screen;
     for my $screen_row (0..$height-1) {
         my $r = $t->{top}+$screen_row;
         if ($r >= $b->{count}) { push @screen,'~'; next }
-        my ($text) = cells($b->line($r),$e->{tabstop}); $text = substr($text,$t->{left},$width);
+        my $text = display($b->line($r),$e->{tabstop},$t->{left}+$width); $text = substr($text,$t->{left},$width);
         $text = highlight($text) if $e->{syntax};
         my $prefix = $gutter ? sprintf('%*d ', $gutter-1,$r+1) : '';
         push @screen, $prefix.$text;
@@ -808,6 +820,7 @@ edit commands accept a numeric count. Counts on both sides of an operator multip
   n N                  repeat search in same / opposite direction
   :                    ex prompt
   ZZ                   write and quit
+  \t                   format Perl (backslash, then t); same as :pt
 
 Insert accepts ASCII, Tab, newline, Backspace (including joining lines), and
 arrows. Escape exits insert. Bracketed paste enters insert mode and treats pasted

@@ -59,9 +59,25 @@ jobs:
             *) setup='apt-get update && apt-get install -y --no-install-recommends perl' ;;
           esac
           docker run --rm -v "$PWD:/src:ro" "$IMAGE" sh -c "$setup && su nobody -s /bin/sh -c 'cd /src && prove t'"
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: perl tools/release.pl
+      - name: Verify packaged single file away from source
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS
+          cp pvim "$RUNNER_TEMP/pvim"
+          cd "$RUNNER_TEMP"
+          perl pvim --version
+          perl pvim --help
+          printf 'old old\n' > standalone.pl
+          perl pvim --batch -c '%s/old/new/g' -c w standalone.pl
+          test "$(cat standalone.pl)" = 'new new'
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [perl, tidy, minimal-linux]
+    needs: [perl, tidy, minimal-linux, package]
     runs-on: ubuntu-latest
     permissions:
       contents: write

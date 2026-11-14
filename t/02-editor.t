@@ -65,4 +65,9 @@ $e=editor('foo'); $e->ex('s&foo&\\&&'); is($e->{b}->line(0),'&','escaped ampersa
 $e=editor('copied'); sendkeys($e,'yy'); $e->ex('enew!'); sendkeys($e,'p'); is_deeply(lines($e),[''],'new buffer cannot reference old register storage');
 $e=editor(map { 'foo foo' } 1..5000); $e->ex('%s/foo/bar/g'); is($e->{b}->line(4999),'bar bar','bulk substitution final line');
 is(scalar @{$e->{b}{pieces}},1,'bulk substitute coalesces contiguous edit run'); $e->ex('undo'); is($e->{b}->line(4999),'foo foo','bulk substitution undo');
+for my $bytes ("a\tb", "\e\0\xff",'x'x200, "\t"x100) {
+    my ($expected)=PVim::Terminal::cells($bytes,8);
+    is(PVim::Terminal::display($bytes,8,undef),$expected,'fast display equals reference renderer');
+    is(PVim::Terminal::display($bytes,8,17),substr($expected,0,17),'bounded display equals clipped reference');
+}
 done_testing;

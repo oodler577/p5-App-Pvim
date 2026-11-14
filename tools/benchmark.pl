@@ -27,8 +27,21 @@ for (1..1000) {
     die "Undo mismatch\n" unless $store->line($r) eq substr($line,0,-1);
     push @latencies, (time-$t)*1000;
 }
+my @frames;
+{
+    local *STDOUT;
+    open STDOUT,'>',File::Spec->catfile($dir,'render-output') or die $!;
+    binmode STDOUT;
+    my $terminal=PVim::Terminal->new;
+    for my $i (1..500) {
+        my $t=time; $e->key($i%2 ? 'l' : 'h'); $terminal->draw($e);
+        push @frames,(time-$t)*1000;
+    }
+    close STDOUT;
+}
+@frames=sort {$a<=>$b} @frames;
 @latencies=sort {$a<=>$b} @latencies;
 my $save=time; $store->save(File::Spec->catfile($dir,'copy')); $save=time-$save;
 die "Round-trip digest mismatch\n" unless PVim::Store::fingerprint($path) eq PVim::Store::fingerprint(File::Spec->catfile($dir,'copy'));
-printf "file_mib=%.2f lines=%d open_seconds=%.3f save_seconds=%.3f random_jump_edit_undo_p50_ms=%.3f p95_ms=%.3f p99_ms=%.3f pieces=%d\n", (-s $path)/1048576,$count,$open,$save,$latencies[499],$latencies[949],$latencies[989],scalar @{$store->{pieces}};
+printf "file_mib=%.2f lines=%d open_seconds=%.3f save_seconds=%.3f random_jump_edit_undo_p50_ms=%.3f p95_ms=%.3f p99_ms=%.3f pieces=%d render_frame_p95_ms=%.3f\n", (-s $path)/1048576,$count,$open,$save,$latencies[499],$latencies[949],$latencies[989],scalar @{$store->{pieces}},$frames[474];
 # RSS is reported by /usr/bin/time -v externally; assertions are semantic, not flaky timing limits.
