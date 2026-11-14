@@ -75,3 +75,15 @@ There is no atomic writer lock or compare-and-swap; do not concurrently edit the
 same path. ACLs, xattrs, ownership preservation, crash recovery, fsync and durable
 power-failure guarantees are outside this first release. This is an experimental
 editor: begin human testing on copies of your files.
+
+
+## 0.1.3 terminal and shell update
+
+The expanded suite contains 2,686 core assertions and 16 POSIX PTY scenarios.
+It adds kernel-verified SIGTSTP stop/SIGCONT resume, insert/prompt/splash state
+preservation, tty restoration, trailing newlines, number-field colors/width, and
+Vim-style shell execution versus filtering/read insertion. Core shell tests also
+exercise pipelines, empty output, failed commands, large stderr, undo/redo and
+quoted helper paths containing spaces. The release gate reruns the complete
+cross-platform matrix; earlier benchmark results above remain historical results
+for the unchanged storage design, rather than fresh 0.1.3 measurements.

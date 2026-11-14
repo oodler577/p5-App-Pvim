@@ -1007,7 +1007,7 @@ Patterns are Perl regular expressions, not Vim regular expressions. Replacement
 supports C<&> for the whole match, C<\1> through C<\9> for captures, C<\t>, and
 escaped delimiters/backslashes/ampersands. Replacement is never evaluated as Perl.
 Only C<g> and C<i> flags are accepted. Multiline substitutions, confirmation,
-Vim expression replacement, named registers, macros, dot-repeat, general shell escapes,
+Vim expression replacement, named registers, macros, dot-repeat,
 splits, tabs, and visual selection are not implemented.
 
 Perltidy uses the installed C<Perl::Tidy> module with C<-npro -l=500>, ignores
