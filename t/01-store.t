@@ -5,6 +5,7 @@ use Test::More;
 use File::Temp qw(tempdir);
 use File::Spec;
 use FindBin;
+use Config;
 require "$FindBin::Bin/../pvim";
 my $dir = tempdir(CLEANUP=>1);
 sub file { File::Spec->catfile($dir,$_[0]) }
@@ -39,6 +40,24 @@ SKIP: {
     eval { $b->save(file('hard'),1) }; like($@,qr/hard links/,'hardlink refused');
     chmod 0444,file('new'); eval { $b->save(file('new'),1) }; like($@,qr/read-only/,'read-only refused even as root');
     chmod 0750,file('new'); $b->save(file('new'),1); is((stat(file('new')))[2]&0777,0750,'mode preserved');
+}
+# A failed write must leave both the destination and dirty state intact.
+put(file('failure'),'original');
+{
+    no warnings 'redefine';
+    local *PVim::Store::write_to = sub { die "simulated write failure\n" };
+    eval { $b->save(file('failure'),1) }; like($@,qr/simulated write failure/,'write failure reported');
+}
+is(get(file('failure')),'original','failed save preserves original bytes');
+my @leftovers=glob(File::Spec->catfile($dir,'.pvim-save-*')); is(scalar @leftovers,0,'failed save removes temporary output');
+SKIP: {
+    skip 'Perl without large file seek',2 unless ($Config{lseeksize} || 0) >= 8;
+    my $large=PVim::Store->new; my $offset=3*1024*1024*1024;
+    seek($large->{data},$offset,0) or die $!; print {$large->{data}} "tail\n" or die $!;
+    $large->_record($offset,4,1); $large->{pieces}=[[0,1]]; $large->reindex;
+    is($large->line(0),'tail','disk-backed line beyond 2 GiB offset');
+    my $result=''; open my $out,'>',\$result or die $!; $large->write_to($out); close $out;
+    is($result,"tail\n",'stream write beyond 2 GiB offset');
 }
 # Model-based splicing: thousands of random edits against a simple array oracle.
 srand 731;

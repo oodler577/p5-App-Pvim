@@ -311,14 +311,14 @@ sub substitute {
     my $delimiter = substr($spec,0,1,'');
     die "Use s/pattern/replacement/[gi]\n" unless $delimiter =~ m{[^\w\s\\]};
     my @parts;
-    for (1 .. 2) {
+    for my $part_number (1 .. 2) {
         my $part = ''; my $done = 0;
         while (length $spec) {
             my $c = substr($spec,0,1,'');
             if ($c eq $delimiter) { $done = 1; last }
             if ($c eq '\\' && length($spec)) {
                 my $next = substr($spec,0,1,'');
-                $part .= $next eq $delimiter ? $next : '\\' . $next;
+                $part .= $next eq $delimiter && $part_number == 1 ? quotemeta($next) : '\\' . $next;
             } else { $part .= $c }
         }
         die "Missing substitute delimiter\n" unless $done;
@@ -393,11 +393,11 @@ sub ex {
     elsif ($command =~ /^(e|edit)(!)?(?:\s+(.+))?$/) {
         my ($force,$path) = ($2,$3); die "Unsaved changes; use :e!\n" if $e->{b}->dirty && !$force;
         $path = $e->{b}{path} unless defined $path;
-        $e->{b} = PVim::Store->load($path); ($e->{row},$e->{col}) = (0,0);
+        $e->{b} = PVim::Store->load($path); ($e->{row},$e->{col}) = (0,0); $e->{register} = []; delete $e->{regtext};
     }
     elsif ($command =~ /^enew(!)?$/) {
         die "Unsaved changes; use :enew!\n" if $e->{b}->dirty && !$1;
-        $e->{b} = PVim::Store->load(undef); ($e->{row},$e->{col}) = (0,0);
+        $e->{b} = PVim::Store->load(undef); ($e->{row},$e->{col}) = (0,0); $e->{register} = []; delete $e->{regtext};
     }
     elsif ($command =~ /^set\s+(nu|number|nonu|nonumber|syntax|nosyntax)$/) {
         my $opt = $1; $e->{$opt =~ /syntax/ ? 'syntax' : 'number'} = $opt =~ /^no/ ? 0 : 1;
@@ -480,7 +480,11 @@ sub key {
             elsif ($k eq '0') { $end = 0 }
             elsif ($k eq 'w') {
                 $end = $c;
-                for (1..$n) { my $tail = substr($line,$end); $tail =~ /^(?:\w+|[^\w\s]+)?\s*/; $end += length($&) }
+                for (1..$n) {
+                    my $tail = substr($line,$end);
+                    if ($op eq 'c' && $tail =~ /^\S/) { $tail =~ /^(?:\w+|[^\w\s]+)/; $end += length($&) }
+                    else { $tail =~ /^(?:\w+|[^\w\s]+)?\s*/; $end += length($&) }
+                }
             }
             elsif ($k eq 'e' || $k eq 'b') {
                 $e->word($k,$n); $end = $e->{row} == $r ? $e->{col} + ($k eq 'e' ? 1 : 0) : length($line);
@@ -808,7 +812,8 @@ edit commands accept a numeric count. Counts on both sides of an operator multip
 Insert accepts ASCII, Tab, newline, Backspace (including joining lines), and
 arrows. Escape exits insert. Bracketed paste enters insert mode and treats pasted
 printable text, tabs and newlines as data; other controls are discarded. Normal mode C<g> waits for another C<g>, matching Vim, unlike XVI2's
-single C<g>. C<^> means first nonblank, while C<0> means absolute line start.
+single C<g>. C<^> means first nonblank, while C<0> means absolute line start. C<cw> on a word
+leaves trailing whitespace, as in Vim. Registers clear when opening a new buffer.
 
 =head1 EX COMMANDS
 

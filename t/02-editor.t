@@ -25,7 +25,7 @@ sendkeys($e,'yyGp'); is($e->{b}->line(3),'lpha beta!','line yank put');
 sendkeys($e,'P'); is($e->{b}{count},5,'put above'); sendkeys($e,'2dd'); is($e->{b}{count},3,'counted line delete');
 $e=editor('one two','three'); sendkeys($e,'dw'); is_deeply(lines($e),['two','three'],'delete word');
 sendkeys($e,'p'); is($e->{b}->line(0),'tone wo','characterwise put');
-$e=editor('hello world'); sendkeys($e,"cwnew\e"); is($e->{b}->line(0),'newworld','change word uses supported w motion');
+$e=editor('hello world'); sendkeys($e,"cwnew\e"); is($e->{b}->line(0),'new world','change word preserves whitespace');
 $e=editor('one','two'); sendkeys($e,"ohello\e"); is_deeply(lines($e),['one','hello','two'],'open below');
 sendkeys($e,'u'); is_deeply(lines($e),['one','two'],'open and insert atomic undo');
 sendkeys($e,"Ozero\e"); is_deeply(lines($e),['zero','one','two'],'open above');
@@ -60,4 +60,9 @@ $e=editor('a'); sendkeys($e,":s/a/b/\r"); is_deeply(lines($e),['b'],'prompt disp
 is(PVim::Terminal::safe("\e[31m\xff"),'<1B>[31m<FF>','escape bytes sanitized');
 my ($cells,$positions)=PVim::Terminal::cells("a\tb",8); is($cells,'a       b','tab rendering'); is_deeply($positions,[0,1,8,9],'byte-to-screen mapping');
 my $colored=PVim::Terminal::highlight('my $x = "text"; # hello'); like($colored,qr/\e\[36mmy/,'keyword highlighting'); like($colored,qr/\e\[32m"text"/,'string highlighting');
+$e=editor('a.b','axb'); $e->ex('%s.a\\.b.X.'); is_deeply(lines($e),['X','axb'],'regex metacharacter delimiter stays literal');
+$e=editor('foo'); $e->ex('s&foo&\\&&'); is($e->{b}->line(0),'&','escaped ampersand delimiter literal');
+$e=editor('copied'); sendkeys($e,'yy'); $e->ex('enew!'); sendkeys($e,'p'); is_deeply(lines($e),[''],'new buffer cannot reference old register storage');
+$e=editor(map { 'foo foo' } 1..5000); $e->ex('%s/foo/bar/g'); is($e->{b}->line(4999),'bar bar','bulk substitution final line');
+is(scalar @{$e->{b}{pieces}},1,'bulk substitute coalesces contiguous edit run'); $e->ex('undo'); is($e->{b}->line(4999),'foo foo','bulk substitution undo');
 done_testing;

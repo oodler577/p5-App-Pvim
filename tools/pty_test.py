@@ -53,7 +53,14 @@ class Session:
             self.proc.wait()
         self.drain(0.01)
         after = termios.tcgetattr(self.slave)
-        restored = after == self.before
+        # Darwin sets PENDIN when ICANON is restored, even with identical settings.
+        # Kernel state, not a configuration leak: xnu/bsd/kern/tty.c TIOCSETA.
+        before = list(self.before)
+        if sys.platform == 'darwin':
+            pendin = termios.PENDIN
+            before[3] &= ~pendin
+            after[3] &= ~pendin
+        restored = after == before
         if not restored:
             print('TTY DIFF:', [(i, a, b) for i, (a, b) in enumerate(zip(self.before, after)) if a != b], file=sys.stderr)
         os.close(self.master)
