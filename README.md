@@ -1,5 +1,7 @@
 # pvim
 
+[![Portability CI](https://github.com/oodler577/pvim/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/oodler577/pvim/actions/workflows/ci.yml)
+
 A Perl-centric vi-style editor in **one Perl file**, targeting **Perl 5.10+**.
 An experimental human-testing release, inspired by the everyday command set in
 [Retrodores XVI2](https://github.com/retrodores/XVI/blob/master/readme.txt).
@@ -27,7 +29,7 @@ Download the standalone file, source archive and checksums from
 - Use `dd yy p P`, `x r R`, `o O`, same-line operators, `J`, `u` and Ctrl-R.
 - Search with `/`, `?`, `n`, `N`. `:%s/old/new/g` substitutes across the file.
 - Line numbers and approximate single-line Perl syntax colors are on by default.
-- `:pt` / `:perltidy` formats with `-l 500` if the optional Perl::Tidy module is
+- `\t` (backslash then t), `:pt` / `:perltidy` formats with `-l 500` if the optional Perl::Tidy module is
   installed. It ignores tidy profiles, is undoable, and never saves automatically.
 - An unnamed startup shows a splash with provisional community-message text.
 

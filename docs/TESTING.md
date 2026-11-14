@@ -19,7 +19,8 @@ or a POSIX machine for terminal tests.
 `/usr/bin/time -v perl tools/benchmark.pl 1024` generates a 1 GiB source-like file,
 indexes it, executes 1,000 random jump/edit/undo operations with content assertions,
 saves a copy and checks SHA-256 equality. It reports indexing/save duration and
-p50/p95/p99 engine latency. The external time command reports peak RSS. This is
+p50/p95/p99 engine latency, plus p95 screen-frame generation latency over 500
+frames written to a temporary file. The external time command reports peak RSS. This is
 an engine benchmark, not a claim about terminal or remote-network latency. Timing
 is reported, not enforced with flaky wall-clock assertions. Temporary data cleans
 up on normal exit. Budget several times the input size in free disk space.
