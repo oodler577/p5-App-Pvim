@@ -1,3 +1,10 @@
+0.1.2  2026-11-14
+     - added clearly named pvim-standalone.pl release asset, identical to pvim
+     - added comprehensive wiki sources, generated POD command/manual pages,
+       local-link validation and guarded wiki publishing tooling
+     - added CI wiki validation and relocated standalone-asset verification
+     - documented ongoing wiki maintenance and hourly master synchronization
+
 0.1.1  2026-11-14
      - fixed repeated zero-width line-end searches remaining on the current line
      - added forward, wrapping and reverse line-end search regression tests

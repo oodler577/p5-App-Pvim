@@ -20,7 +20,13 @@ while its only required modules ship with full Perl 5.10+. Minimal distro Perl
 packages may split core modules into separate OS packages; see portability notes.
 
 Download the standalone file, source archive and checksums from
-[Releases](https://github.com/oodler577/pvim/releases).
+[Releases](https://github.com/oodler577/pvim/releases). The clearly named
+`pvim-standalone.pl` asset is the same file and can be run with
+`perl pvim-standalone.pl file.pl`.
+
+[Wiki and quick start](https://github.com/oodler577/pvim/wiki) cover installation,
+controls, Perl features and troubleshooting. Wiki sources are maintained in
+`docs/wiki/` and synchronized from master by the development VM.
 
 ## First steps
 

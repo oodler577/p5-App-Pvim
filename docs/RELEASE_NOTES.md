@@ -1,3 +1,17 @@
+pvim 0.1.2 adds the clearly named **pvim-standalone.pl** download and comprehensive
+[wiki documentation](https://github.com/oodler577/pvim/wiki).
+
+Download that one file and run `perl pvim-standalone.pl practice.pl` on Linux,
+macOS or WSL. It already contains all pvim code and POD; no non-core modules or
+separate fat-packing step are required. The `pvim` alias has identical bytes.
+Standard Perl core libraries are required; Perl::Tidy remains optional.
+
+The wiki includes a first-session guide, command reference, search/substitution,
+Perl formatting/colors, CLI/batch, large files, safety, troubleshooting, portability,
+testing and maintenance. Pages are generated/validated from source and published
+from master. This remains a human-testing prerelease; tabs and visual selection
+are deferred. Native Windows supports batch/engine use only.
+
 pvim 0.1.1 includes a fix and four regression tests for repeating zero-width
 line-end searches. It supersedes the initial 0.1.0 human-testing prerelease.
 

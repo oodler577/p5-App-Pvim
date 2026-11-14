@@ -25,6 +25,7 @@ jobs:
         run: |
           perl -c pvim
           perl -MPod::Checker -e "exit podchecker('pvim')"
+          perl tools/wiki.pl --check
           prove -v t
       - name: POSIX terminal integration
         if: runner.os != 'Windows'
@@ -63,17 +64,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: perl tools/wiki.pl --check
+      - run: python3 tools/wiki_test.py
       - run: perl tools/release.pl
       - name: Verify packaged single file away from source
         run: |
           cd dist
           sha256sum -c SHA256SUMS
-          cp pvim "$RUNNER_TEMP/pvim"
+          cmp pvim pvim-standalone.pl
+          cp pvim-standalone.pl "$RUNNER_TEMP/pvim-standalone.pl"
           cd "$RUNNER_TEMP"
-          perl pvim --version
-          perl pvim --help
+          perl pvim-standalone.pl --version
+          perl pvim-standalone.pl --help
           printf 'old old\n' > standalone.pl
-          perl pvim --batch -c '%s/old/new/g' -c w standalone.pl
+          perl pvim-standalone.pl --batch -c '%s/old/new/g' -c w standalone.pl
           test "$(cat standalone.pl)" = 'new new'
   release:
     if: startsWith(github.ref, 'refs/tags/v')

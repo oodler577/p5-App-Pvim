@@ -3,3 +3,5 @@
 *.bak
 *.tdy
 __pycache__/
+
+/build/
