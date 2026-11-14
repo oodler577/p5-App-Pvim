@@ -12,6 +12,7 @@
 | Symlink/hard-link/read-only write refused | Save to a different ordinary writable file; `!` does not bypass these protections. |
 | Long pause before the screen opens | The initial streaming index/copy must finish; check file size and TMPDIR disk performance. |
 | Temporary-file or disk-full error | Check scratch and destination free space/permissions. See Large Files. |
+| Ctrl-Z / resume | Ctrl-Z should restore the shell tty; use shell `fg` to resume. Include your shell and terminal in a bug report if this fails. |
 | Colors look wrong | Try `:set nosyntax` or start with `--no-syntax`; the lexer is intentionally approximate. |
 | Arrow keys act unexpectedly | Record the terminal type/emulator and exact input sequence; `hjkl` remain available in normal mode. |
 | Resize leaves stale text | Press Ctrl-L or `L`; resizing is recognized on a subsequent keypress. |

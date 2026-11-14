@@ -34,9 +34,14 @@ controls, Perl features and troubleshooting. Wiki sources are maintained in
 - Move with `hjkl`, arrows, `w b e`, `0 ^ $`, `gg G`, counts, and paging.
 - Use `dd yy p P`, `x r R`, `o O`, same-line operators, `J`, `u` and Ctrl-R.
 - Search with `/`, `?`, `n`, `N`. `:%s/old/new/g` substitutes across the file.
-- Line numbers and approximate single-line Perl syntax colors are on by default.
+- Approximate single-line Perl syntax colors are on by default. Line numbers
+  start off; `:set number` enables a yellow, three-column number field.
 - `\t` (backslash then t), `:pt` / `:perltidy` formats with `-l 500` if the optional Perl::Tidy module is
   installed. It ignores tidy profiles, is undoable, and never saves automatically.
+- Ctrl-Z suspends cleanly; `fg` resumes the same buffer and editing mode.
+- `:! command` displays shell output; `:.! command` and `!!` filter the current
+  line. `:2,10! command` / `:%! command` filter a range / file, and `:r !command`
+  inserts output. Buffer edits are undoable; failed commands preserve text.
 - An unnamed startup shows a splash with provisional community-message text.
 
 The embedded POD is the complete command and CLI reference. No tabs, splits,
@@ -69,8 +74,8 @@ perl tools/release.pl
 ```
 
 Batch mode makes the same command engine usable in scripts and agent workflows.
-Writes are explicit; invalid commands exit nonzero. No shell commands or arbitrary
-replacement-code evaluation are supported.
+Writes are explicit; invalid commands exit nonzero. Shell execution is explicit through `!` filters; substitution replacement text
+is never evaluated as Perl code.
 
 [Testing and human checklist](docs/TESTING.md) ·
 [Portability](docs/PORTABILITY.md) · [Changes](Changes)

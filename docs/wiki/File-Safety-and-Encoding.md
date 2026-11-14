@@ -36,6 +36,8 @@ text, tabs and newlines as data and discards other controls.
 
 `:q` refuses unsaved changes. `:q!` discards them. The same guard applies to `:e`
 and `:enew`, with `!` variants available for intentional discard. Terminal settings
-are restored on normal exit and handled signal/error paths. SIGKILL and power
+are restored on normal exit and handled signal/error paths, and a trailing newline
+leaves the shell prompt on a fresh line. Ctrl-Z also restores tty/screen state
+before suspension; `fg` resumes the existing buffer and mode. SIGKILL and power
 failure cannot be handled. See [Troubleshooting](Troubleshooting) if a terminal
 is left in an unexpected state.

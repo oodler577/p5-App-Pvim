@@ -1,3 +1,15 @@
+0.1.3  2026-11-14
+     - added proper Ctrl-Z / SIGTSTP suspend and fg resume with tty restoration,
+       full redraw and preservation of unsaved text and current editing mode
+     - made handled interactive exits emit a trailing newline
+     - turned line numbers off by default; added yellow three-column number
+       fields that widen for larger line numbers
+     - added Vim-style :! execution, ranged ! filters, normal-mode !! prompts,
+       and :r ! / :0r ! command output insertion with undo and failure guards
+     - documented Perl highlighting/tooling, visual-selection status, and a
+       prioritized shortlist of missing advanced-beginner Vim features
+     - established Vim behavior as the default; deviations require confirmation
+
 0.1.2  2026-11-14
      - added clearly named pvim-standalone.pl release asset, identical to pvim
      - added comprehensive wiki sources, generated POD command/manual pages,

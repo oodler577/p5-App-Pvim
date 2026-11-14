@@ -17,7 +17,7 @@ Supported controls are fully listed in [Command Reference](Command-Reference).
 | Perl colors | Approximate single-line lexer, not a complete Perl parser |
 | Formatting | Optional whole-buffer Perl::Tidy using `-npro -l=500` |
 | Configuration | CLI/ex toggles; no vimrc or persistent configuration file |
-| Shell integration | No shell escapes or command execution |
+| Shell integration | `:!` execution, ranged filters, `!!`, and `:r !` output insertion; no filename/history expansion yet |
 | Recovery | No swap recovery, crash journal or autosave |
 | Windows | Native batch/engine support; interactive mode needs POSIX/WSL |
 
@@ -28,3 +28,41 @@ The splash consumes a dismissal key before normal editing begins.
 
 Tabs, visual selection and community/donation splash copy are deferred plans,
 not promises of current behavior. Human feedback will determine the next stage.
+
+## Behavior policy
+
+Vim is the default behavior standard for implemented features. If a proposed
+request differs from Vim, maintainers should explain that difference and obtain
+confirmation before introducing it. Missing features below are not alternative
+semantics or promises that every Vim command already works. Perl regex syntax
+and the explicitly requested Perl-centric integrations remain documented choices.
+
+## Useful advanced-beginner additions
+
+These are missing features worth considering next, ordered roughly by effort and
+reuse of current code. Effort is a design estimate, not a release commitment.
+
+| Feature | Why useful | Relative effort |
+| --- | --- | --- |
+| `f F t T`, `; ,` | Jump to a character on the current line and repeat | Small |
+| `W B E` | Move by whitespace-delimited words | Small |
+| `*` / `#` | Search for the word under the cursor | Small |
+| `>>` / `<<` | Indent/unindent lines with counts | Small to moderate |
+| `autoindent`, `tabstop`, `shiftwidth`, `expandtab` | Practical code editing with consistent whitespace | Small to moderate |
+| Insert-mode Ctrl-W / Ctrl-U | Erase a word or inserted line text quickly | Small |
+| Marks `ma`, `'a`, backtick-a | Return to saved positions | Small to moderate; marks must track edits |
+| `:r file`, `:w !command` | Insert files and send text to tools without replacing it | Small to moderate |
+| Basic `%` bracket matching | Jump among matching delimiters | Small initially; Perl-aware quote/comment handling takes more work |
+| Linewise visual `V` | Highlight lines, then yank/delete/filter them | Moderate; best first visual stage |
+| Characterwise visual `v` | Select text across line boundaries | Moderate; needs multi-line character ranges |
+| Dot-repeat `.` | Repeat the last edit | Moderate; record/replay insert sessions and counts correctly |
+| Search-match highlighting | Make results visible while navigating | Moderate; compose with syntax and selection colors |
+| Substitute confirmation `:s/.../.../gc` | Review replacements individually | Moderate; interactive decisions and coherent undo |
+
+I would prioritize character-find motions, indentation/options, word-under-cursor
+search, and then linewise visual selection. Dot-repeat is highly useful, but is
+not merely replaying the last key and deserves its own tests.
+
+Tabs, window splits, blockwise visual selection, comprehensive Perl parsing,
+Unicode grapheme editing and language-server integration are larger projects and
+are not included in the small-feature shortlist.

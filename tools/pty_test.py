@@ -23,7 +23,7 @@ class Session:
         self.master, self.slave = pty.openpty()
         self.before = termios.tcgetattr(self.slave)
         fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack('HHHH', 24, 80, 0, 0))
-        self.proc = subprocess.Popen([PERL, SCRIPT, *args], stdin=self.slave, stdout=self.slave, stderr=self.slave)
+        self.proc = subprocess.Popen([PERL, SCRIPT, *args], stdin=self.slave, stdout=self.slave, stderr=self.slave, preexec_fn=os.setpgrp)
         self.output = b''
         self.drain(0.25)
     def drain(self, seconds=0.10):
@@ -43,8 +43,23 @@ class Session:
     def send(self, value):
         os.write(self.master, value)
         self.drain()
+    def wait_stopped(self):
+        until = time.monotonic() + 5
+        while time.monotonic() < until:
+            pid, status = os.waitpid(self.proc.pid, os.WNOHANG | os.WUNTRACED)
+            if pid:
+                if os.WIFSTOPPED(status):
+                    self.drain()
+                    return status
+                raise AssertionError('editor exited instead of stopping: ' + repr(status))
+            self.drain(0.02)
+        raise AssertionError('editor did not enter kernel stopped state')
+    def resume(self):
+        self.proc.send_signal(signal.SIGCONT)
+        self.drain(0.15)
     def close(self):
         if self.proc.poll() is None:
+            self.proc.send_signal(signal.SIGCONT)
             self.proc.terminate()
         try:
             self.proc.wait(timeout=5)
@@ -80,6 +95,130 @@ class TerminalTests(unittest.TestCase):
         self.s = Session(*args)
         self.assertIsNone(self.s.proc.poll(), self.s.output.decode(errors='replace'))
         return self.s
+    def test_ctrl_z_preserves_insert_and_unsaved_text(self):
+        s = self.start('--no-splash', self.path)
+        s.send(b'ifirst')
+        s.send(b'\x1a')
+        status = s.wait_stopped()
+        self.assertEqual(os.WSTOPSIG(status), signal.SIGTSTP)
+        self.assertTrue(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        self.assertTrue(termios.tcgetattr(s.slave)[3] & termios.ECHO)
+        self.assertIn(b'\x1b[?1049l', s.output)
+        self.assertTrue(s.output.endswith(b'\n'))
+        s.resume()
+        self.assertFalse(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        self.assertIn(b'INSERT', s.output)
+        s.send(b' second')
+        s.send(b'\x1b')
+        # Repeated suspend/resume in normal mode must work too.
+        s.send(b'\x1a')
+        s.wait_stopped()
+        s.resume()
+        s.send(b':wq\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        s.drain()
+        self.assertTrue(s.output.endswith(b'\n'))
+        with open(self.path, 'rb') as f:
+            self.assertEqual(f.read(), b'first second\n')
+    def test_suspend_from_prompt_and_external_signal(self):
+        s = self.start('--no-splash', self.path)
+        s.send(b'ihello')
+        s.send(b'\x1b')
+        s.send(b':w')
+        s.send(b'\x1a')
+        s.wait_stopped()
+        s.resume()
+        self.assertIn(b':w', s.output)
+        s.send(b'\r')
+        s.proc.send_signal(signal.SIGTSTP)
+        s.wait_stopped()
+        s.resume()
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        with open(self.path, 'rb') as f:
+            self.assertEqual(f.read(), b'hello\n')
+    def test_suspend_on_splash(self):
+        s = self.start()
+        initial = s.output.count(b'Perl at the prompt')
+        s.send(b'\x1a')
+        s.wait_stopped()
+        s.resume()
+        self.assertGreater(s.output.count(b'Perl at the prompt'), initial)
+        s.send(b' ')
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+    def test_line_numbers_default_off_and_yellow_three_columns(self):
+        with open(self.path, 'wb') as f:
+            f.write(b'alpha\nbeta\n')
+        s = self.start('--no-syntax', self.path)
+        self.assertIn(b'\x1b[1;1H\x1b[0malpha', s.output)
+        self.assertNotIn(b'\x1b[33m', s.output)
+        s.send(b':set number\r')
+        self.assertIn(b'\x1b[33m  1\x1b[0m alpha', s.output)
+        self.assertIn(b'\x1b[33m  2\x1b[0m beta', s.output)
+        self.assertIn(b'\x1b[1;5H', s.output)
+        before = len(s.output)
+        s.send(b':set nonumber\r')
+        self.assertIn(b'\x1b[1;1H\x1b[0malpha', s.output[before:])
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+    def test_number_field_grows_without_truncation(self):
+        with open(self.path, 'wb') as f:
+            f.write(b'x\n' * 1000)
+        s = self.start('--no-syntax', self.path)
+        s.send(b':set nu\r')
+        self.assertIn(b'\x1b[33m   1\x1b[0m x', s.output)
+        s.send(b'G')
+        self.assertIn(b'\x1b[33m1000\x1b[0m x', s.output)
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+    def test_tty_eof_exits_with_newline(self):
+        s = self.start('--no-splash')
+        # VMIN=0 allows a real zero-byte tty read (EOF) without disconnecting
+        # the PTY master, so the final terminal output can still be observed.
+        attrs = termios.tcgetattr(s.slave)
+        attrs[6][termios.VMIN] = 0
+        attrs[6][termios.VTIME] = 1
+        termios.tcsetattr(s.slave, termios.TCSANOW, attrs)
+        s.proc.send_signal(signal.SIGWINCH)
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        s.drain()
+        self.assertTrue(s.output.endswith(b'\n'))
+    def test_shell_filter_restores_ui_and_undo(self):
+        with open(self.path, 'wb') as f:
+            f.write(b'one\ntwo\nthree\n')
+        s = self.start(self.path)
+        s.send(b':2! tr a-z A-Z\r')
+        self.assertIn(b'Filtered 1 lines', s.output)
+        self.assertFalse(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        s.send(b'u')
+        s.send(b':%! tr a-z A-Z\r')
+        self.assertIn(b'Filtered 3 lines', s.output)
+        s.send(b":.! sh -c 'echo discarded; echo diagnostic >&2; exit 7'\r")
+        self.assertIn(b'Filter failed (exit 7)', s.output)
+        self.assertFalse(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        s.send(b':wq\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        s.drain()
+        self.assertTrue(s.output.endswith(b'\n'))
+        with open(self.path, 'rb') as f:
+            self.assertEqual(f.read(), b'ONE\nTWO\nTHREE\n')
+    def test_shell_display_and_read_follow_vim(self):
+        with open(self.path, 'wb') as f:
+            f.write(b'original\n')
+        s = self.start(self.path)
+        s.send(b':! printf "visible-output"\r')
+        self.assertIn(b'visible-output', s.output)
+        self.assertIn(b'Press ENTER', s.output)
+        self.assertTrue(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        s.send(b'\r')
+        self.assertFalse(termios.tcgetattr(s.slave)[3] & termios.ICANON)
+        s.send(b':r ! printf "inserted\\n"\r')
+        s.send(b'!!tr a-z A-Z\r')
+        s.send(b':wq\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        with open(self.path, 'rb') as f:
+            self.assertEqual(f.read(), b'original\nINSERTED\n')
     def test_splash_and_write(self):
         s = self.start()
         self.assertIn(b'Perl at the prompt', s.output)
@@ -101,7 +240,7 @@ class TerminalTests(unittest.TestCase):
             self.assertEqual(f.read(), b'QZbc\n')
     def test_bracketed_paste_cannot_quit(self):
         s = self.start('--no-splash', self.path)
-        s.send(b'\x1b[200~hello\r:q!\rworld\x1b[201~')
+        s.send(b'\x1b[200~hello\x1a\r:q!\rworld\x1b[201~')
         self.assertIsNone(s.proc.poll())
         s.send(b'\x1b')
         s.send(b':wq\r')
@@ -144,6 +283,7 @@ class TerminalTests(unittest.TestCase):
         self.assertNotEqual(s.proc.wait(timeout=5), 0)
         s.drain()
         self.assertIn(b'Terminated', s.output)
+        self.assertTrue(s.output.endswith(b'\n'))
     def test_file_bytes_cannot_control_terminal(self):
         with open(self.path, 'wb') as f:
             f.write(b'\x1b]52;c;evil\x07\n')

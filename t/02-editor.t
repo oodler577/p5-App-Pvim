@@ -51,7 +51,7 @@ $e=editor('ab'); $e->ex('s/^/X/g'); is($e->{b}->line(0),'Xab','zero-width global
 for my $cmd ('%s/a/b/e','9s/a/b/','2,1s/a/b/','s/a/b','bogus') { eval {$e->ex($cmd)}; ok($@,"reject $cmd") }
 $e=editor('a','b'); sendkeys($e,"i!\e"); eval {$e->ex('q')}; like($@,qr/Unsaved/,'quit guard');
 eval {$e->ex('e absent')}; like($@,qr/Unsaved/,'edit guard'); $e->ex('q!'); ok($e->{quit},'force quit');
-$e=editor('a'); $e->ex('set nonumber'); ok(!$e->{number},'hide numbers'); $e->ex('set number'); ok($e->{number},'show numbers');
+$e=editor('a'); ok(!$e->{number},'numbers are off by default'); $e->ex('set nonumber'); ok(!$e->{number},'hide numbers'); $e->ex('set number'); ok($e->{number},'show numbers');
 $e->ex('set nosyntax'); ok(!$e->{syntax},'disable syntax');
 $e=editor('a'); sendkeys($e,"d\ex"); is_deeply(lines($e),[''],'Escape cancels operator');
 $e=editor('one','two','three','four','five','six','seven'); sendkeys($e,'2d3d'); is_deeply(lines($e),['seven'],'operator counts multiply');

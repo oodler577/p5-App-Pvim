@@ -223,7 +223,7 @@ sub save {
 package PVim::Editor;
 sub new {
     my ($class, $store) = @_;
-    return bless { b => $store, row => 0, col => 0, mode => 'normal', number => 1, syntax => 1,
+    return bless { b => $store, row => 0, col => 0, mode => 'normal', number => 0, syntax => 1,
         tabstop => 8, message => '', pending => '', count => '', register => [], page => 20 }, $class;
 }
 sub clamp {
@@ -374,6 +374,103 @@ sub tidy {
     $e->edit(sub { $e->{b}->splice_lines(0,$e->{b}{count}, map { $e->{b}->append($_) } @lines) });
     $e->{message} = 'Formatted with perltidy -l 500';
 }
+sub shell_status {
+    my ($command) = @_;
+    local $SIG{TSTP} = 'DEFAULT' unless $^O eq 'MSWin32';
+    my $status = $^O eq 'MSWin32'
+        ? system($ENV{COMSPEC} || 'cmd.exe','/d','/s','/c',$command)
+        : system('/bin/sh','-c',$command);
+    die "Cannot execute command: $!\n" if $status == -1;
+    return $status;
+}
+sub shell {
+    my ($e,$command) = @_;
+    die "Shell command required\n" unless length $command;
+    my ($status,$suspended);
+    my $ok = eval {
+        if ($e->{before_filter}) { $e->{before_filter}->(); $suspended = 1 }
+        local $SIG{TSTP} = 'DEFAULT' unless $^O eq 'MSWin32';
+        $status = shell_status($command);
+        $e->{shell_wait}->() if $suspended && $e->{shell_wait};
+        1;
+    };
+    my $failure = $@;
+    $e->{after_filter}->() if $suspended && $e->{after_filter};
+    die $failure unless $ok;
+    my $reason = $status & 127 ? 'signal '.($status & 127) : 'exit '.($status >> 8);
+    $e->{message} = $status ? "Shell command failed ($reason); buffer unchanged" : 'Shell command completed';
+    die "$e->{message}\n" if $status;
+}
+sub filter {
+    my ($e,$lo,$hi,$command,$insert) = @_;
+    die "Filter command required\n" unless length $command;
+    my $input = File::Temp->new(UNLINK => 1);
+    my $output = File::Temp->new(UNLINK => 1);
+    my $output_path = $output->filename;
+    my $errors = File::Temp->new(UNLINK => 1);
+    binmode $input; binmode $output; binmode $errors;
+    my $b = $e->{b};
+    for my $r ($lo..$hi) {
+        my $term = $b->term($r);
+        my $ending = $term == 2 ? "\r\n" : $term == 1 ? "\n" : $b->{eol};
+        $ending = '' if $r == $b->{count}-1 && !$b->{final};
+        print {$input} $b->line($r),$ending or die "Filter input: $!\n";
+    }
+    seek($input,0,0) or die "Filter input seek: $!\n";
+    my ($saved_in,$saved_out,$saved_err);
+    open $saved_in,'<&',\*STDIN or die "Save stdin: $!\n";
+    open $saved_out,'>&',\*STDOUT or die "Save stdout: $!\n";
+    open $saved_err,'>&',\*STDERR or die "Save stderr: $!\n";
+    my ($status,$suspended);
+    my $ok = eval {
+        if ($e->{before_filter}) { $e->{before_filter}->(); $suspended = 1 }
+        open STDIN,'<&',$input or die "Filter stdin: $!\n";
+        open STDOUT,'>&',$output or die "Filter stdout: $!\n";
+        open STDERR,'>&',$errors or die "Filter stderr: $!\n";
+        # Shell execution is explicit and only reached by a user-issued ! filter.
+        # Temp filenames and buffer contents are never interpolated into commands.
+        $status = shell_status($command);
+        1;
+    };
+    my $failure = $@;
+    my $restored = 1;
+    $restored = 0 unless open STDIN,'<&',$saved_in;
+    $restored = 0 unless open STDOUT,'>&',$saved_out;
+    $restored = 0 unless open STDERR,'>&',$saved_err;
+    if ($suspended) { $e->{after_filter}->() if $e->{after_filter} }
+    die "Cannot restore filter IO\n" unless $restored;
+    die $failure unless $ok;
+    seek($errors,0,0) or die "Filter error seek: $!\n";
+    read($errors,my $diagnostic,4096);
+    if ($status) {
+        my $reason = $status & 127 ? 'signal '.($status & 127) : 'exit '.($status >> 8);
+        die "Filter failed ($reason); buffer unchanged: $diagnostic\n";
+    }
+    # Close the capture handle before reopening on Windows. The file remains
+    # owned by its File::Temp object until this command returns.
+    close $output or die "Close filter output: $!\n";
+    my $result = PVim::Store->load($output_path);
+    my $empty = !-s $output_path;
+    if ($insert && $empty) { $e->{message} = 'Read 0 lines'; return }
+    $e->edit(sub {
+        my @pieces = $b->slice(0,$lo);
+        unless ($empty) {
+            my $first;
+            for my $r (0..$result->{count}-1) {
+                my $id = $b->append($result->line($r),$result->term($r));
+                $first = $id unless defined $first;
+            }
+            push @pieces, [$first,$result->{count}];
+        }
+        push @pieces, $b->slice($hi+1,$b->{count}-$hi-1);
+        my $through_end = $hi == $b->{count}-1;
+        $b->{pieces} = \@pieces; $b->reindex;
+        if (!$b->{count}) { $b->splice_lines(0,0,$b->append('',0)); $b->{final} = 0 }
+        elsif ($through_end && !$empty) { $b->{final} = $result->{final} }
+        $e->{row} = $lo; $e->{col} = 0;
+    });
+    $e->{message} = ($insert ? 'Read '.($empty ? 0 : $result->{count}) : 'Filtered '.($hi-$lo+1)).' lines'.(length($diagnostic) ? ': '.$diagnostic : '');
+}
 sub ex {
     my ($e, $command) = @_;
     $command =~ s/^://; $command =~ s/^\s+|\s+$//g;
@@ -384,10 +481,16 @@ sub ex {
         my $resolve = sub { $_[0] eq '.' ? $e->{row} : $_[0] eq '$' ? $e->{b}{count}-1 : $_[0]-1 };
         ($lo,$hi) = ($resolve->($a),$resolve->($b)); $ranged = 1;
     }
+    $command =~ s/^\s+//;
+    if ($command =~ s/^r(?:ead)?\s*!\s*//) {
+        die "Invalid read address\n" if $lo < -1 || $hi < $lo || $hi >= $e->{b}{count};
+        $e->filter($hi+1,$hi,$command,1); return;
+    }
     die "Invalid line range\n" if $lo < 0 || $hi < $lo || $hi >= $e->{b}{count};
     if ($command eq '' && $ranged) { $e->{row} = $hi; $e->clamp; return }
     if ($command =~ s/^s(?=[^a-zA-Z])//) { $e->substitute($lo,$hi,$command); return }
-    die "Range only supported for substitutions and line jumps\n" if $ranged;
+    if ($command =~ s/^!\s*//) { $ranged ? $e->filter($lo,$hi,$command) : $e->shell($command); return }
+    die "Range only supported for substitutions, filters and line jumps\n" if $ranged;
     if ($command =~ /^(q|quit)(!)?$/) { die "Unsaved changes; use :q!\n" if $e->{b}->dirty && !$2; $e->{quit} = 1 }
     elsif ($command =~ /^(wq|x|w|write)(!)?(?:\s+(.+))?$/) {
         my ($cmd,$force,$path) = ($1,$2,$3);
@@ -461,6 +564,11 @@ sub key {
     my $explicit = length($e->{count}); my $n = $explicit ? 0 + $e->{count} : 1; $e->{count} = '';
     if ($e->{pending}) {
         my $op = $e->{pending}; $n *= $e->{opcount}; $e->{pending} = '';
+        if ($op eq '!' && $k eq '!') {
+            my $last = $e->{row}+$n; $last = $b->{count} if $last > $b->{count};
+            $e->{mode} = 'prompt';
+            $e->{prompt} = $n == 1 ? ':.!' : ':'.($e->{row}+1).','.$last.'!'; return;
+        }
         if ($op eq 'g' && $k eq 'g') { $e->{row} = $n-1; $e->{col} = 0; $e->clamp; return }
         if ($op eq '\\' && $k eq 't') { $e->tidy; return }
         if ($op eq 'Z' && $k eq 'Z') { $e->ex('wq'); return }
@@ -507,7 +615,7 @@ sub key {
         }
         die "Unknown key sequence\n";
     }
-    if ($k eq '\\' || $k =~ /^[dycrgZ]$/) { $e->{pending} = $k; $e->{opcount} = $n; return }
+    if ($k eq '\\' || $k =~ /^[dycrgZ!]$/) { $e->{pending} = $k; $e->{opcount} = $n; return }
     if ($k eq 'h' || $k eq 'LEFT') { $e->{col} -= $n }
     elsif ($k eq 'l' || $k eq 'RIGHT') { $e->{col} += $n }
     elsif ($k eq 'j' || $k eq 'DOWN') { $e->{row} += $n }
@@ -582,7 +690,26 @@ sub start {
 }
 sub stop {
     my ($t) = @_;
-    if (my $old = delete $t->{old}) { $old->setattr(0,POSIX::TCSANOW()); print "\e[0m\e[?2004l\e[?1049l\e[?25h" }
+    if (my $old = delete $t->{old}) { $old->setattr(0,POSIX::TCSANOW()); print "\e[0m\e[?2004l\e[?1049l\e[?25h\n" }
+}
+sub suspend {
+    my ($t) = @_;
+    return unless $t->{old};
+    $t->stop;
+    # Stop only this editor. Its shell retains control of the foreground job.
+    # The default disposition is essential when called from our TSTP handler.
+    {
+        local $SIG{TSTP} = 'DEFAULT';
+        my $mask = POSIX::SigSet->new;
+        POSIX::sigprocmask(POSIX::SIG_UNBLOCK(), POSIX::SigSet->new(POSIX::SIGTSTP()), $mask);
+        kill 'TSTP', $$ or die "Cannot suspend: $!\n";
+        POSIX::sigprocmask(POSIX::SIG_SETMASK(), $mask);
+    }
+    # Execution continues here after fg / SIGCONT. Take a fresh tty snapshot,
+    # since the shell may have changed terminal settings while we were stopped.
+    $t->start;
+    $t->{previous} = [];
+    $t->{on_resume}->() if $t->{on_resume};
 }
 sub DESTROY { $_[0]->stop }
 sub size {
@@ -657,7 +784,8 @@ sub draw {
     my $b = $e->{b};
     $t->{top} = $e->{row} if $e->{row} < $t->{top};
     $t->{top} = $e->{row}-$height+1 if $e->{row} >= $t->{top}+$height;
-    my $gutter = $e->{number} ? length($b->{count})+1 : 0; $gutter = 0 if $gutter > $cols-4;
+    my $digits = length($b->{count}); $digits = 3 if $digits < 3;
+    my $gutter = $e->{number} ? $digits+1 : 0; $gutter = 0 if $gutter > $cols-4;
     my $width = $cols-$gutter-1;
     my $cx = length(display(substr($b->line($e->{row}),0,$e->{col}),$e->{tabstop},undef));
     $t->{left} = $cx if $cx < $t->{left}; $t->{left} = $cx-$width+1 if $cx >= $t->{left}+$width;
@@ -667,7 +795,7 @@ sub draw {
         if ($r >= $b->{count}) { push @screen,'~'; next }
         my $text = display($b->line($r),$e->{tabstop},$t->{left}+$width); $text = substr($text,$t->{left},$width);
         $text = highlight($text) if $e->{syntax};
-        my $prefix = $gutter ? sprintf('%*d ', $gutter-1,$r+1) : '';
+        my $prefix = $gutter ? sprintf("\e[33m%*d\e[0m ", $gutter-1,$r+1) : '';
         push @screen, $prefix.$text;
     }
     my $status = sprintf(' %s%s | %s | %d,%d | %d lines',safe($b->{path} || '[No Name]'),$b->dirty ? ' [+]' : '',uc($e->{mode}),$e->{row}+1,$e->{col}+1,$b->{count});
@@ -684,21 +812,31 @@ sub draw {
     $x = $cols-1 if $x >= $cols;
     print $output.sprintf("\e[%d;%dH\e[?25h",$cy,$x);
 }
-sub splash {
+sub splash_frame {
     my ($t) = @_;
     $t->size;
-    my @text = ('pvim 0.1.2 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
+    my @text = ('pvim 0.1.3 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
         'i  start editing       :e filename  open a file', ':help  quick controls  pvim --manual  full manual', '',
         'Perl 5.10+ / core modules / no privileged installation', '', 'Community / donation message: to be supplied.', '', 'Press any key to begin.');
     print "\e[2J\e[H";
     for my $i (0..$#text) { last if $i >= $t->{rows}-1; print sprintf("\e[%d;3H%s",$i+2,substr(safe($text[$i]),0,$t->{cols}-4)) }
-    $t->read_key; print "\e[2J\e[H"; $t->{previous} = [];
+}
+sub splash {
+    my ($t) = @_;
+    local $t->{in_splash} = 1;
+    $t->splash_frame;
+    while (1) {
+        my $k = $t->read_key;
+        if (defined($k) && $k eq "\x1a") { $t->suspend; next }
+        last;
+    }
+    print "\e[2J\e[H"; $t->{previous} = [];
 }
 
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.2';
+our $VERSION = '0.1.3';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash,$no_syntax); my @commands;
@@ -717,6 +855,14 @@ sub run {
     local $SIG{HUP} = sub { die "Terminal disconnected; unsaved changes were not written\n" };
     local $SIG{INT} = sub { die "Interrupted; unsaved changes were not written\n" };
     local $SIG{WINCH} = sub { $e->{redraw} = 1 };
+    $e->{before_filter} = sub { $t->stop };
+    $e->{shell_wait} = sub {
+        print "\nPress ENTER to return to pvim: ";
+        while (sysread(STDIN,my $answer,1)) { last if $answer eq "\n" || $answer eq "\r" }
+    };
+    $e->{after_filter} = sub { $t->start; $t->{previous} = []; $e->{redraw} = 1 };
+    $t->{on_resume} = sub { $e->{redraw} = 1; $t->{in_splash} ? $t->splash_frame : $t->draw($e) };
+    local $SIG{TSTP} = sub { $t->suspend };
     my $ok = eval {
         $t->start; $t->splash unless @args || $no_splash;
         my $pasting = 0;
@@ -724,6 +870,7 @@ sub run {
             $t->draw($e) unless $pasting;
             my $k = $t->{queued} && @{$t->{queued}} ? shift @{$t->{queued}} : $t->read_key;
             last unless defined $k;
+            if ($k eq "\x1a" && !$pasting) { $t->suspend; next }
             if ($k eq 'PASTE_START') {
                 $pasting = 1; $e->insert_mode if $e->{mode} eq 'normal' || $e->{mode} eq 'prompt'; next;
             }
@@ -808,6 +955,7 @@ edit commands accept a numeric count. Counts on both sides of an operator multip
   Ctrl-F Ctrl-B        page forward / backward; PageDown / PageUp also work
   Ctrl-D Ctrl-U        half-page forward / backward
   Ctrl-L or L          redraw
+  Ctrl-Z               suspend to shell; fg resumes with a full redraw
   i a I A              insert before/after cursor, first nonblank/end of line
   o O                  open line below/above and insert
   R                    overwrite mode; Backspace moves left
@@ -838,7 +986,7 @@ leaves trailing whitespace, as in Vim. Registers clear when opening a new buffer
   :q / :q!             quit with unsaved guard / discard changes
   :e [file]            open or reload; :e! discards unsaved changes
   :enew / :enew!       new unnamed buffer, with unsaved guard / discard
-  :set number          show line numbers (default); :set nonumber hides
+  :set number          show yellow line numbers; :set nonumber hides (default)
   :set syntax          enable basic Perl colors; :set nosyntax disables
   :undo / :redo        undo / redo
   :123                 go to line 123; :$ goes to last line
@@ -847,19 +995,80 @@ leaves trailing whitespace, as in Vim. Registers clear when opening a new buffer
   :2,10s/foo/bar/gi    range, global, case insensitive
   :.,$s#old#new#g      current line through EOF, alternate delimiter
   :pt / :perltidy      format buffer if Perl::Tidy is installed
+  :! command           run a shell command and display output; no buffer edit
+  :.! command          filter the current line; !! opens this prompt
+  :r !command          insert command output below the current line
+  :0r !command         insert command output at the top of the file
+  :2,10! command       filter a line range; :.,$! command also works
+  :%! command          filter the whole buffer
   :help                short controls reminder
 
 Patterns are Perl regular expressions, not Vim regular expressions. Replacement
 supports C<&> for the whole match, C<\1> through C<\9> for captures, C<\t>, and
 escaped delimiters/backslashes/ampersands. Replacement is never evaluated as Perl.
 Only C<g> and C<i> flags are accepted. Multiline substitutions, confirmation,
-Vim expression replacement, named registers, macros, dot-repeat, shell escapes,
+Vim expression replacement, named registers, macros, dot-repeat, general shell escapes,
 splits, tabs, and visual selection are not implemented.
 
 Perltidy uses the installed C<Perl::Tidy> module with C<-npro -l=500>, ignores
 project/user tidy profiles, and never invokes a shell. Formatting is undoable
 and does not save. Formatting is capped at 8 MiB and 200,000 lines because
 Perl::Tidy materializes the whole source. Failure leaves the buffer unchanged.
+
+=head1 PERL FEATURES
+
+Perl highlighting is an approximate single-line lexer for common keywords,
+variables, simple quoted strings, comments and numbers. C<:set syntax> and
+C<:set nosyntax> toggle it. It does not fully parse Perl: heredocs, multiline
+quotes, POD, regex literals and embedded languages need more work. Horizontal
+clipping can lose lexical context. There is no language server, completion,
+buffer-aware C<perl -c> command, debugger or integrated test runner yet.
+
+C<\t> (backslash then t), C<:pt> and C<:perltidy> invoke optional Perl::Tidy.
+Search and substitution use Perl regexes. Batch commands expose the same editor
+engine for automation. External filters can invoke installed tools explicitly.
+Visual selection, including characterwise C<v> and linewise C<V>, is not present.
+
+=head1 SHELL FILTERS
+
+C<:! command> runs a shell command and displays output without altering the
+buffer. Interactive use waits for Enter before returning to the editing screen.
+C<:.! command> sends the current line to the command's stdin and replaces it with
+stdout. Normal-mode C<!!> opens the current-line filter prompt. C<:2,10! command>,
+C<:.,$! command> and C<:%! command> filter ranges or the entire file. Output can
+grow, shrink or delete the selected lines. A replacement is one undo unit and
+never saves automatically.
+
+C<:r !command> inserts stdout below the current line; C<:0r !command> inserts it
+at the top. An explicit read address inserts below that line. Read commands do
+not send the existing buffer as stdin. Empty read output leaves the buffer alone.
+
+  :! ls
+  :.! tr '[:lower:]' '[:upper:]'
+  :2,10! sort
+  :%! perl -pe 's/old/new/g'
+  :%! perltidy -st -npro -l=500
+  :r !date
+
+This follows Vim's separation of execution, filtering and reading command output.
+Command-history C<:!!>, filename C<%>/C<#> expansion inside shell commands, general
+C<!motion> filters, and ordinary C<:r file> are not implemented yet. Only explicitly
+typed shell/read/filter commands execute programs.
+
+POSIX uses C</bin/sh -c>; native Windows batch uses COMSPEC/cmd.exe. Commands must
+read stdin and write replacement text to stdout; pipelines/redirection follow
+the shell's semantics. A nonzero command status, output-read error or edit failure
+leaves the buffer unchanged. Up to 4096 stderr bytes become a status diagnostic.
+Successful empty stdout deletes the selected lines. A filter is not a syntax-check
+command: C<perl -c> normally emits no replacement source and would erase its range
+on success. Use C<:! perl -c path/to/saved.pl> or Ctrl-Z / C<fg> for checks.
+These check the saved file, not unsaved buffer text.
+
+Capture files prevent stdout/stderr pipe deadlocks and bound capture RAM. Input,
+output and the replacement line index use temporary disk; the external command
+has its own resource requirements. Commands are synchronous. Interactive tty state
+and the main screen are restored while a filter runs, then editing resumes.
+Shell commands can modify external files; undo reverses only the buffer edit.
 
 =head1 LARGE FILES AND PERFORMANCE
 
@@ -903,6 +1112,17 @@ not an atomic compare-and-swap against concurrent writers. Avoid concurrent edit
 
 On normal exit and handled terminal errors the tty is restored. SIGKILL, power
 failure and terminal loss can lose unsaved edits; this release has no recovery.
+All handled interactive exits restore the main screen and emit a newline.
+Ctrl-Z restores terminal settings and suspends the editor from normal, insert,
+replace, command-prompt or splash mode. Resume the shell job with C<fg> to restore
+the editing screen and mode, retaining unsaved changes. External SIGTSTP follows
+the same path. Bracketed-paste control bytes do not trigger suspension.
+
+Line numbers are off by default. C<:set number> uses a right-aligned three-column
+number field in ANSI yellow, followed by one separating space. The field widens
+for four or more digits without truncating numbers. C<:set nosyntax> disables Perl
+text highlighting independently of the yellow number gutter.
+
 Ctrl-C is a normal input byte in raw mode; use Escape then C<:q> to quit. Terminal
 resize is handled at the next keypress. Native Windows interactive UI is pending.
 

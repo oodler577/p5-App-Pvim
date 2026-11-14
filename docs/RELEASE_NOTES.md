@@ -1,3 +1,20 @@
+pvim 0.1.3 addresses initial terminal feedback and adds Vim-style shell tools.
+
+- Ctrl-Z / external SIGTSTP restore the tty, suspend, and resume with `fg` without
+  losing unsaved text or editing mode. Handled interactive exits emit a newline.
+- Line numbers are off by default. `:set number` enables a yellow three-column
+  number field plus separator, widening for four or more digits.
+- `:! command` displays output without editing. `:.!`, `!!`, `:2,10!` and `:%!`
+  filter text. `:r !command` / `:0r !command` insert output below the cursor / at
+  the top. Buffer edits are undoable and failed captures preserve buffer text.
+- Wiki pages describe current Perl colors/tooling, visual-selection limitations,
+  and useful next Vim features. Vim behavior is the default for future work;
+  departures require explicit confirmation.
+
+Download **pvim-standalone.pl** and run `perl pvim-standalone.pl file.pl`.
+This remains a human-testing prerelease. Native Windows interactive mode,
+visual selection, tabs and comprehensive Perl parsing are not yet implemented.
+
 pvim 0.1.2 adds the clearly named **pvim-standalone.pl** download and comprehensive
 [wiki documentation](https://github.com/oodler577/pvim/wiki).
 

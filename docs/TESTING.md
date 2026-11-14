@@ -12,7 +12,9 @@ are tested; otherwise its absence is tested.
 `python3 tools/pty_test.py` opens real POSIX pseudo-terminals and drives the actual
 executable. It tests splash/startup, typing/save, escape decoding, arrows, opening
 lines, bracketed paste (including from the ex prompt), unsaved guards, resize,
-terminal-injection sanitization and terminal restoration on normal/signal exit.
+terminal-injection sanitization and terminal restoration/newlines on normal/signal/EOF exit, kernel-verified
+Ctrl-Z/external TSTP suspend/resume with unsaved state, yellow number fields,
+Vim-style shell execution/filter/read behavior and UI restoration.
 Python is a test dependency only. On native Windows run the Perl suite; use WSL
 or a POSIX machine for terminal tests.
 
@@ -45,9 +47,11 @@ Use disposable copies of real Perl sources for initial testing.
 9. Paste a multiline Perl snippet; resize the terminal; use Ctrl-L to redraw.
 10. Check colors on comments, strings and variables; assess the documented lexer limits.
 11. With Perl::Tidy installed, use `:pt`, undo it, and check diagnostics on broken Perl.
-12. Open a representative large log/source file with sufficient TMPDIR space. Observe
+12. Suspend/resume in insert and prompt modes with Ctrl-Z and `fg`; check preserved
+    text and tty state. Test `:!` display, `:.!`/ranged filtering, and `:r !` insertion.
+13. Open a representative large log/source file with sufficient TMPDIR space. Observe
     opening time, navigation, typing, long lines, saving and actual terminal latency.
-13. Quit normally and confirm shell echo, Ctrl-C, and screen state return to normal.
+14. Quit normally and confirm shell echo, Ctrl-C, and screen state return to normal.
 
 Record OS, `perl -V`, terminal emulator, locale, file size/line count/longest line,
 exact keys, expected/actual text, and whether reproducing with `--no-syntax` changes

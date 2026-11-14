@@ -1,6 +1,6 @@
 # Modes and editing
 
-pvim starts in **normal mode**. Most normal-mode keys are commands rather than
+pvim starts in **normal mode**, with line numbers off. Most normal-mode keys are commands rather than
 text. The status line names the mode and shows the filename, dirty marker `[+]`,
 cursor byte position and line count. Escape exits insert/replace, cancels an ex
 prompt, or clears a pending operator/count.
@@ -36,6 +36,10 @@ objects, indent operators and arbitrary Vim operator combinations are not presen
 
 Bracketed paste enters insert mode and treats printable text, tabs and newlines
 as text. Other control sequences are discarded. Avoid pasting raw binary content.
+
+Ctrl-Z suspends from normal, insert, replace, prompt or splash mode; `fg` restores
+the same editing state and redraws. All handled interactive exits emit a newline
+after returning to the main terminal screen.
 
 See [Undo and Registers](Undo-and-Registers), [Navigation](Navigation), and the
 complete [Command Reference](Command-Reference).

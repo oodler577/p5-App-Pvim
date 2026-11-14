@@ -1,5 +1,8 @@
 # pvim project instructions
 
+- Default to Vim's behavior and command semantics. If a user request appears
+  to diverge from Vim, explain the difference and ask for confirmation before
+  implementing the divergence. Do not silently invent an alternative default.
 - Preserve the single-file runtime and Perl 5.10+ compatibility. Keep `master` as
   the main branch. Tabs and visual selection remain deferred until requested.
 - When behavior changes, update embedded POD, relevant `docs/wiki/*.md` sources,

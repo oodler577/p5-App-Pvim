@@ -16,13 +16,17 @@ Counts precede commands: `5j`, `20G`, `10gg`. Escape cancels a pending count.
 | Ctrl-B / PageUp | Page backward |
 | Ctrl-D / Ctrl-U | Half-page forward / backward |
 | Ctrl-L / `L` | Force a screen redraw |
+| Ctrl-Z, then shell `fg` | Suspend cleanly, then resume the same mode and buffer |
 
 Words use ASCII-style word/punctuation classes. These motions are a subset of Vim;
 paragraph, sentence, marks, bracket matching and text-object motions are pending.
 
-Long lines pan horizontally instead of wrapping. The current line-number gutter
-is always visible unless disabled with `:set nonumber` (or `:set nonu`). Reenable
-it with `:set number` (or `:set nu`). The gutter grows with the line count.
+Long lines pan horizontally instead of wrapping. Numbers are **off by default**.
+`:set number` (or `:set nu`) enables a right-aligned **three-column number field**,
+in yellow, followed by one separator space. For example, line 1 has two leading
+spaces, the yellow digit `1`, then a space before text. Four-digit and longer
+numbers widen the field instead of being clipped. `:set nonumber` (or `:set nonu`)
+hides it again. Disabling Perl syntax colors does not disable yellow line numbers.
 
 Terminal dimensions are read on the next keypress after a resize. Linux and
 macOS/BSD-style terminal-size ioctls are implemented; other POSIX systems fall
