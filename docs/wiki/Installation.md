@@ -62,3 +62,21 @@ perl pvim file.pl
 
 See [Perl Features](Perl-Features) for the optional formatter and
 [Portability](Portability) for actual test coverage.
+
+## CPAN-format tarball (future App::Pvim)
+
+App::Pvim is prepared for future CPAN publication, but has not been uploaded by
+this work. To install the GitHub release's CPAN-format tarball into your account:
+
+```sh
+tar -xzf App-Pvim-@@VERSION@@.tar.gz
+cd App-Pvim-@@VERSION@@
+perl Makefile.PL INSTALL_BASE="$HOME/.local/pvim"
+make test
+make install
+"$HOME/.local/pvim/bin/pvim" --version
+```
+
+This needs make and standard Perl build tools. It requires no root and no
+Dist::Zilla on the consuming machine. The standalone download remains the option
+when you want to avoid a build/install step entirely. See [Releases](Releases).

@@ -79,9 +79,36 @@ jobs:
           printf 'old old\n' > standalone.pl
           perl pvim-standalone.pl --batch -c '%s/old/new/g' -c w standalone.pl
           test "$(cat standalone.pl)" = 'new new'
+  cpan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install author build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdist-zilla-perl
+      - name: Build and test App::Pvim distribution
+        run: |
+          dzil build
+          dzil test
+      - name: Verify user-local install from CPAN tarball
+        run: |
+          version=$(perl pvim --version | cut -d' ' -f2)
+          mkdir -p "$RUNNER_TEMP/pvim-cpan-test"
+          tar -xzf "App-Pvim-${version}.tar.gz" -C "$RUNNER_TEMP/pvim-cpan-test"
+          cd "$RUNNER_TEMP/pvim-cpan-test/App-Pvim-${version}"
+          perl Makefile.PL INSTALL_BASE="$RUNNER_TEMP/pvim-cpan-install"
+          make test
+          make install
+          "$RUNNER_TEMP/pvim-cpan-install/bin/pvim" --version
+          PERL5LIB="$RUNNER_TEMP/pvim-cpan-install/lib/perl5" perl -MApp::Pvim -e 'print "$App::Pvim::VERSION\n"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvim-cpan-distribution
+          path: App-Pvim-*.tar.gz
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [perl, tidy, minimal-linux, package]
+    needs: [perl, tidy, minimal-linux, package, cpan]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -91,6 +118,10 @@ jobs:
         run: |
           version=$(perl pvim --version | cut -d' ' -f2)
           test "${GITHUB_REF_NAME}" = "v${version}"
+      - uses: actions/download-artifact@v4
+        with:
+          name: pvim-cpan-distribution
+          path: dist
       - run: perl tools/release.pl
       - uses: actions/upload-artifact@v4
         with:

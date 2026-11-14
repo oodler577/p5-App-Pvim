@@ -1,3 +1,11 @@
+0.1.4  2026-11-14
+     - prepared the App::Pvim CPAN distribution with dist.ini and an author
+       build plugin generating the metadata module and installed script from
+       the one maintained standalone source and version
+     - added CPAN build, distribution tests and user-local install checks to CI
+     - included the CPAN-format tarball in GitHub release assets and checksums
+     - documented future CPAN publication; no PAUSE upload has been performed
+
 0.1.3  2026-11-14
      - added proper Ctrl-Z / SIGTSTP suspend and fg resume with tty restoration,
        full redraw and preservation of unsaved text and current editing mode

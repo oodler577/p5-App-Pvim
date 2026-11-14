@@ -19,3 +19,10 @@
   is needed while the runtime has no non-core dependencies.
 - Run checks appropriate to a change. Runtime changes require the core suite and
   POSIX PTY integration; packaging changes require relocated standalone checks.
+
+- Prepare CPAN releases as App::Pvim with dist.ini. The local author plugin
+  generates script/pvim and lib/App/Pvim.pm from the one maintained pvim source;
+  do not introduce a second manually edited runtime copy or independent version.
+- Run dzil build/test and verify a nonprivileged INSTALL_BASE install for packaging
+  changes. Author dependencies are not runtime dependencies. Never run dzil release
+  or upload to PAUSE without explicit authorization to publish to CPAN.

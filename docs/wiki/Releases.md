@@ -8,7 +8,8 @@ release's prerelease flag/notes. The current documented version is @@VERSION@@.
 | `pvim-standalone.pl` | Complete single-file editor, POD and CLI; run `perl pvim-standalone.pl file.pl` |
 | `pvim` | Identical executable bytes under a short command name |
 | `pvim-@@VERSION@@.tar.gz` | Source, tests, tools, license texts and documentation |
-| `SHA256SUMS` | SHA-256 values for the three downloads above |
+| `App-Pvim-@@VERSION@@.tar.gz` | CPAN-format source distribution for future App::Pvim publication |
+| `SHA256SUMS` | SHA-256 values for all release downloads |
 
 There are no required non-core pvim modules to resolve. The one-file distribution
 already contains all of pvim's packages. It does not bundle Perl itself or the
@@ -30,3 +31,23 @@ A tag must match the embedded editor version. Current automated publication mark
 releases as prereleases for human testing. The wiki follows `master`, with its
 version shown at publication; for an older release use that tag's embedded manual
 and source archive. See [Documentation Maintenance](Documentation-Maintenance).
+
+## App::Pvim on CPAN: prepared, not uploaded
+
+The repository now contains `dist.ini`. Run `dzil build` and `dzil test` with
+Dist::Zilla on the author machine. A local author plugin generates the CPAN
+namespace module and installed command from the maintained `pvim` file; there is
+no independently edited second runtime or version.
+
+Consumers of `App-Pvim-VERSION.tar.gz` use standard `perl Makefile.PL`, `make test`
+and `make install`, optionally with `INSTALL_BASE=/your/writable/prefix`.
+Dist::Zilla and Moose are author/build-time tooling, not runtime requirements.
+`App::Pvim` provides namespace/version metadata; run the `pvim` executable to edit.
+
+CI builds/tests the CPAN tarball and installs it into a user-local prefix. GitHub
+releases include it and checksum it alongside the standalone download. These jobs
+never publish to PAUSE. A future `dzil release` requires intentional authorization
+and confirmed PAUSE namespace permissions; it is not part of ordinary maintenance.
+
+For single-file use, continue downloading `pvim-standalone.pl`; nothing needs to
+be installed from CPAN. [Repository CPAN notes](https://github.com/oodler577/pvim/blob/master/docs/CPAN.md).

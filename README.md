@@ -83,3 +83,27 @@ is never evaluated as Perl code.
 Source is on `master`. CI tests old/current Perls across Linux, macOS and Windows,
 plus minimal Linux distributions, optional tidy integration and real PTYs on
 POSIX runners. Tagged releases wait for every required CI job before publishing.
+
+## Future CPAN distribution: App::Pvim
+
+The project is now packaged as **App::Pvim** for a future CPAN upload; it has not
+been published to CPAN by this work. GitHub releases also provide the tested
+`App-Pvim-VERSION.tar.gz` distribution. You can install that tarball into a
+user-owned prefix with standard Perl build tools; consumers do not need Dist::Zilla.
+
+Author commands (with Dist::Zilla installed):
+
+```sh
+dzil build
+dzil test
+```
+
+`dist.ini` uses a local author plugin to read the version and runtime from `pvim`,
+then generate `script/pvim` and `lib/App/Pvim.pm`. The module supplies the CPAN
+namespace/version, not a second editor implementation or a library API. All
+application code remains in the one standalone file. The CPAN build adds no
+non-core runtime requirements; Perl::Tidy remains optional.
+
+Do not run `dzil release` until a CPAN upload is intentionally authorized and PAUSE
+permissions are verified. Normal CI and GitHub release jobs only build/test the
+distribution; they never upload to PAUSE. See [CPAN preparation](docs/CPAN.md).

@@ -1,3 +1,18 @@
+pvim 0.1.4 adds **App::Pvim** CPAN preparation while retaining the single-file runtime.
+
+- `dist.ini` and a local author plugin build the installed command and CPAN module
+  from the one pvim source/version. No separate runtime implementation is maintained.
+- CI builds/tests the App-Pvim tarball and checks installation into a user-owned
+  prefix. Dist::Zilla is author tooling, not a runtime or end-user requirement.
+- The GitHub release includes `App-Pvim-0.1.4.tar.gz` with checksums alongside the
+  identical `pvim` / `pvim-standalone.pl` executables and ordinary source archive.
+- **No upload to CPAN/PAUSE has been performed.** Publication is deferred until
+  explicitly authorized and namespace permissions are confirmed.
+
+All v0.1.3 terminal, gutter, Vim-style shell execution/filter/read changes are
+included. See the wiki for current Perl highlighting/tooling and the prioritized
+advanced-beginner feature shortlist. Visual selection and tabs remain deferred.
+
 pvim 0.1.3 addresses initial terminal feedback and adds Vim-style shell tools.
 
 - Ctrl-Z / external SIGTSTP restore the tty, suspend, and resume with `fg` without
