@@ -70,4 +70,8 @@ for my $bytes ("a\tb", "\e\0\xff",'x'x200, "\t"x100) {
     is(PVim::Terminal::display($bytes,8,undef),$expected,'fast display equals reference renderer');
     is(PVim::Terminal::display($bytes,8,17),substr($expected,0,17),'bounded display equals clipped reference');
 }
+$e=editor('abc','def'); $e->search('$',1); is_deeply([@{$e}{qw(row col)}],[0,2],'line-end search cursor');
+sendkeys($e,'n'); is_deeply([@{$e}{qw(row col)}],[1,2],'repeat line-end search advances');
+sendkeys($e,'n'); is_deeply([@{$e}{qw(row col)}],[0,2],'line-end search wraps');
+sendkeys($e,'N'); is_deeply([@{$e}{qw(row col)}],[1,2],'line-end reverse repeat');
 done_testing;

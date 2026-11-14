@@ -19,14 +19,16 @@ bundles pvim itself, not a Perl interpreter or copies of the Perl core library.
 
 ## Verification record
 
-Verified on 2026-11-14. All 24 required test jobs passed on runtime commit
-`28b7901`; the tag workflow repeats the suite before publishing release assets.
+Verified on 2026-11-14. All 24 required test jobs passed for 0.1.0, followed by a regression fix
+for repeating zero-width line-end searches in 0.1.1. The tag workflow repeats
+the complete suite before publishing each release. Assertion counts below
+include the four additional line-end regressions in 0.1.1.
 [Passing CI run](https://github.com/oodler577/pvim/actions/runs/43635261193).
 
 | Environment | Perl versions | Verified behavior |
 | --- | --- | --- |
-| GitHub Ubuntu runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,649 assertions, eight PTY scenarios |
-| GitHub macOS runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,649 assertions, eight PTY scenarios |
+| GitHub Ubuntu runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,653 assertions, eight PTY scenarios |
+| GitHub macOS runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,653 assertions, eight PTY scenarios |
 | GitHub Windows runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, engine/CLI/batch suite; interactive UI explicitly unavailable |
 | Debian bookworm slim | Distro Perl | Complete suite as unprivileged nobody |
 | Ubuntu 24.04 container | Distro Perl | Complete suite as unprivileged nobody |
