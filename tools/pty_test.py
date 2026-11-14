@@ -107,7 +107,9 @@ class TerminalTests(unittest.TestCase):
         self.assertTrue(s.output.endswith(b'\n'))
         s.resume()
         self.assertFalse(termios.tcgetattr(s.slave)[3] & termios.ICANON)
-        self.assertIn(b'INSERT', s.output)
+        # A long macOS TMPDIR path may clip the mode label in an 80-column
+        # status line. Check the insert-position cursor and actual saved text.
+        self.assertIn(b'\x1b[1;6H', s.output)
         s.send(b' second')
         s.send(b'\x1b')
         # Repeated suspend/resume in normal mode must work too.
