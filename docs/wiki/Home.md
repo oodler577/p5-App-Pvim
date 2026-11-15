@@ -1,6 +1,10 @@
 # pvim: a Perl-centric vi-style editor
 
-Current documented version: **@@VERSION@@**. This is an experimental human-testing release.
+Opening title: **pvim - portable vim clone**.
+
+Current documented version: **@@VERSION@@**. This is an experimental human-testing release implementing a small vi-style subset.
+Interactive support is verified on Linux/macOS; Windows supports batch/engine use.
+See [Portability](Portability) for the evidence and unverified platforms.
 
 pvim runs from one Perl file with the standard Perl library. It needs no root access,
 compiler, make, curses, or required CPAN packages. Its interactive interface uses a

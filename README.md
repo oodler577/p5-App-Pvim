@@ -7,6 +7,12 @@ An experimental human-testing release, inspired by the everyday command set in
 [Retrodores XVI2](https://github.com/retrodores/XVI/blob/master/readme.txt).
 This is an independent implementation; no XVI2 code is included.
 
+The splash title is **pvim - portable vim clone**. The supported feature set is a
+small vi-style subset. Interactive portability is verified on Linux and macOS;
+native Windows is currently batch/engine-only. BSD, other Unix systems and
+32-bit/vintage machines remain unverified. See [portability evidence](docs/PORTABILITY.md)
+and [Vim differences](https://github.com/oodler577/pvim/wiki/Vim-Differences).
+
 ```sh
 pvim hello.pl
 pvim -v

@@ -141,11 +141,11 @@ class TerminalTests(unittest.TestCase):
             self.assertEqual(f.read(), b'hello\n')
     def test_suspend_on_splash(self):
         s = self.start()
-        initial = s.output.count(b'Perl at the prompt')
+        initial = s.output.count(b'pvim - portable vim clone')
         s.send(b'\x1a')
         s.wait_stopped()
         s.resume()
-        self.assertGreater(s.output.count(b'Perl at the prompt'), initial)
+        self.assertGreater(s.output.count(b'pvim - portable vim clone'), initial)
         s.send(b' ')
         s.send(b':q\r')
         self.assertEqual(s.proc.wait(timeout=5), 0)
@@ -254,7 +254,7 @@ class TerminalTests(unittest.TestCase):
         self.assertEqual(s.proc.wait(timeout=5),0)
     def test_splash_and_write(self):
         s = self.start()
-        self.assertIn(b'Perl at the prompt', s.output)
+        self.assertIn(b'pvim - portable vim clone', s.output)
         s.send(b' ')
         s.send(b'iuse strict;\rprint "ok";')
         s.send(b'\x1b')

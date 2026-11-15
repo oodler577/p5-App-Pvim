@@ -20,7 +20,8 @@ standard library is still required; see [Installation](Installation).
 
 1. Make code, tests, POD and wiki-source changes on `master`.
 2. Run `prove t`, the POSIX PTY suite, `perl tools/wiki.pl --check`, and relevant benchmarks.
-3. Update the embedded version, splash, Changes and release notes together.
+3. Update the embedded version, Changes and release notes together. Keep the
+   splash title versionless: `pvim - portable vim clone`.
 4. Run `perl tools/release.pl`; check the generated checksums and standalone script.
 5. Commit/push and create an annotated `vVERSION` tag.
 6. The tag workflow runs the platform/version suite, minimal-distro checks,

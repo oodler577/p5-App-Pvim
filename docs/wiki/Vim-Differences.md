@@ -1,6 +1,8 @@
 # Vim and XVI2 differences
 
+The splash title **pvim - portable vim clone** refers to an early vi-style subset.
 pvim is a small vi-style editor, not a compatible implementation of Vim.
+[Portability](Portability) separates verified interactive, batch-only and untested platforms.
 Supported controls are fully listed in [Command Reference](Command-Reference).
 
 | Area | Current behavior |

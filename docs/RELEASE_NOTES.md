@@ -1,9 +1,11 @@
-pvim 0.1.7 simplifies the centered opening splash. The quick editing/help lines,
-environment line and provisional community/donation message have been removed.
-The splash now includes:
+pvim 0.1.8 changes the opening title to **pvim - portable vim clone**, without a
+version number. Use `pvim -v` or `pvim --version` for version details.
 
-**Support Us at PerlCommunity.org**
+The portability documentation now records actual passed CI: six Perl versions on
+Linux/macOS/Windows, four unprivileged Linux-distro jobs, standalone packaging and
+App::Pvim build/install checks. Interactive coverage is Linux and macOS; native
+Windows is batch/engine-only. BSD, 32-bit, vintage and other Unix environments
+remain unverified. The editor is a limited vi-style subset, not full Vim compatibility.
 
-The title, short description, centered layout and dismissal prompt remain.
-README and wiki reflect the final support text. The executable, standalone and
-App::Pvim tarball installation routes remain; no upload to PAUSE is performed.
+The support message, centered layout, plain text and existing editing behavior
+remain. No upload to CPAN/PAUSE is performed.

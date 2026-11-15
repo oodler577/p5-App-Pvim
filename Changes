@@ -1,3 +1,8 @@
+0.1.8  2026-11-14
+     - changed the versionless opening title to pvim - portable vim clone
+     - audited portability against completed CI and documented interactive,
+       batch-only and unverified platforms plus the limited Vim-like feature set
+
 0.1.7  2026-11-14
      - simplified the centered splash by removing quick-control, environment
        and provisional donation text; added Support Us at PerlCommunity.org

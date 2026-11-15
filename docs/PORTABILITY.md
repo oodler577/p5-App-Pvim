@@ -6,8 +6,9 @@
   coverage is pending. Other POSIX platforms fall back to LINES/COLUMNS or 24x80.
 - Windows: byte-storage engine, ex commands, CLI, tests and batch mode. Native
   console raw input is not implemented; WSL provides the interactive environment.
-- CPU: multi-gigabyte work should use 64-bit Perl with large-file seek support.
-  32-bit/other architecture coverage and actual vintage hosts remain future work.
+- CPU: verified runner coverage includes Linux/Windows x86-64 and macOS ARM64.
+  Multi-gigabyte work should use 64-bit Perl with large-file seek support.
+  32-bit builds, other CPU architectures and actual vintage hosts are unverified.
 - Text: byte-oriented, ASCII display with escaped non-ASCII bytes; not Unicode
   character editing. Existing LF/CRLF/mixed endings and final-newline state survive.
 - Optional: Perl::Tidy installed for the same interpreter as pvim, only for `:pt`.
@@ -17,32 +18,73 @@ Some Linux distributions split core Perl libraries into optional OS packages.
 A Perl binary without its standard library is insufficient; the standalone file
 bundles pvim itself, not a Perl interpreter or copies of the Perl core library.
 
+## What the opening title claims
+
+The splash reads **pvim - portable vim clone**. Here, portable means that the
+single-file source and tested command subset run across the environments below
+without a privileged application install or non-core runtime modules. It does not
+mean every system with a Perl binary, every terminal, or all of Vim's behavior.
+For technical descriptions, **portable Perl vi-style editor** is the precise scope.
+
+The implementation remains an early Vim-like subset. There is no Vimscript/plugin
+compatibility, visual selection, tabs, splits, complete Unicode editing, crash
+recovery or full Vim command/regex grammar. Read the embedded manual and
+[Vim differences](https://github.com/oodler577/pvim/wiki/Vim-Differences).
+
 ## Verification record
 
-Verified on 2026-11-14. All 24 required test jobs passed for 0.1.0, followed by a regression fix
-for repeating zero-width line-end searches in 0.1.1. The tag workflow repeats
-the complete suite before publishing each release. Assertion counts below
-include the four additional line-end regressions in 0.1.1.
-[Passing CI run](https://github.com/oodler577/pvim/actions/runs/43635261193).
+Audited against the completed **v0.1.7** workflow before the title/documentation
+update: [passing CI run](https://github.com/oodler577/pvim/actions/runs/43676202813).
+All **26 workflow jobs** passed, including 25 verification jobs and publication.
+The v0.1.8 tag repeats the same release gate; a configured job is not itself
+proof of a passed test.
 
-| Environment | Perl versions | Verified behavior |
+| Environment | Tested Perl versions | Evidence and support scope |
 | --- | --- | --- |
-| GitHub Ubuntu runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,653 assertions, eight PTY scenarios |
-| GitHub macOS runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, 2,653 assertions, eight PTY scenarios |
-| GitHub Windows runner | 5.10, 5.16, 5.24, 5.32, 5.40, 5.42 | Syntax, POD, engine/CLI/batch suite; interactive UI explicitly unavailable |
-| Debian bookworm slim | Distro Perl | Complete suite as unprivileged nobody |
-| Ubuntu 24.04 container | Distro Perl | Complete suite as unprivileged nobody |
-| Alpine 3.22 | Distro Perl, musl libc | Complete suite as unprivileged nobody |
-| Fedora 43 | Distro Perl | Complete suite as unprivileged nobody |
-| Optional formatting job | Perl 5.40 + Perl::Tidy | Actual formatting, key shortcut, undo and failure preservation |
-| Packaging job | Runner Perl | Single-file relocation, help, batch editing and checksum verification |
-| Development VM | Ubuntu 24.04.4, x86_64, Perl 5.38.2 | Complete suite, eight PTYs, packaging, 1/3 GiB benchmarks |
+| GitHub Linux x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 18 real POSIX PTY scenarios |
+| GitHub macOS ARM64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 18 real POSIX PTY scenarios |
+| GitHub Windows x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Engine, CLI, ex and batch suite; native interactive UI unavailable |
+| Debian bookworm slim | Distro Perl | Core suite as unprivileged nobody; separate container UI tests are not run |
+| Ubuntu 24.04 container | Distro Perl | Core suite as unprivileged nobody |
+| Alpine 3.22 / musl | Distro Perl | Core suite as unprivileged nobody |
+| Fedora 43 | Distro Perl | Core suite as unprivileged nobody |
+| Optional formatter job | Perl 5.40 + Perl::Tidy | Real formatting, key shortcut, undo and failure preservation |
+| Standalone packaging job | Runner Perl | Relocation, direct execution, help, batch editing and checksums |
+| App::Pvim packaging job | Runner Perl + author Dist::Zilla | Build, distribution tests, user-local install and command/module version |
+| Development VM | Ubuntu 24.04.4 x86-64, Perl 5.38.2 | Core and terminal suites, standalone/CPAN packaging, nobody-user install, historical 1/3 GiB benchmarks |
 
-The 5.10 matrix resolves to 5.10.1. Perl 5.10.0 is the syntax/runtime target;
-5.10.0 itself has not been executed. macOS PTY verification masks only the kernel's
-PENDIN state flag, which the Darwin kernel sets upon returning to canonical mode;
-all other terminal flags, speeds and control characters are compared. See
-[Apple's terminal driver](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c).
+The suite reports **2,692 Perl tests**; platform/build-specific skips apply.
+The built CPAN distribution additionally executes the generated-module/script
+checks that skip in a raw checkout. Python is used only by author/CI integration
+tests, not by the installed editor.
+
+The earliest executed Perl is **5.10.1**, not 5.10.0. Runtime syntax targets 5.10.0,
+but that exact patch release has not been executed. Six representative Perl
+versions are tested; this is not evidence that every intermediate patch release
+or custom Perl configuration works. GitHub `*-latest` runner images may evolve;
+the linked job logs retain the actual runner and interpreter details.
+
+macOS PTY verification masks only the kernel's PENDIN state flag, set when returning
+to canonical mode. All other terminal flags, speeds and control characters are
+compared. See [Apple's terminal driver](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c).
+
+## Not yet verified
+
+- Native Windows interactive console mode is not implemented. WSL is a plausible
+  Linux route, but has not been independently exercised in this CI matrix.
+- FreeBSD/OpenBSD/NetBSD, Solaris, AIX, other Unix systems and Intel macOS are
+  unverified. BSD-style resize support in code is not a BSD test result.
+- 32-bit builds, other CPU architectures, vintage systems and unusual terminals
+  are unverified. Full standard Perl libraries and a POSIX tty/ANSI terminal are
+  requirements, not optional components supplied by the standalone file.
+- Text editing is byte-oriented; non-ASCII bytes are escaped for display.
+- Host scratch/destination disk capacity, filesystem semantics and the workload
+  still constrain large-file use. Giant individual lines and synchronous regex
+  operations remain practical responsiveness limits.
+
+Useful next portability work would be a real BSD terminal job, 32-bit Perl checks,
+and an additional architecture. These are suggestions, not passed tests or
+requirements blocking the currently verified platforms.
 
 ## Measured large-file results
 
@@ -76,14 +118,3 @@ same path. ACLs, xattrs, ownership preservation, crash recovery, fsync and durab
 power-failure guarantees are outside this first release. This is an experimental
 editor: begin human testing on copies of your files.
 
-
-## 0.1.3 terminal and shell update
-
-The expanded suite contains 2,686 core assertions and 16 POSIX PTY scenarios.
-It adds kernel-verified SIGTSTP stop/SIGCONT resume, insert/prompt/splash state
-preservation, tty restoration, trailing newlines, number-field colors/width, and
-Vim-style shell execution versus filtering/read insertion. Core shell tests also
-exercise pipelines, empty output, failed commands, large stderr, undo/redo and
-quoted helper paths containing spaces. The release gate reruns the complete
-cross-platform matrix; earlier benchmark results above remain historical results
-for the unchanged storage design, rather than fresh 0.1.3 measurements.

@@ -33,7 +33,7 @@ release asset contains the same executable bytes.
 5. Type `:q` and press Enter to quit.
 6. Back in the shell, run `perl practice.pl`.
 
-To start without a filename, use `pvim` (or `./pvim` in the download directory). The splash
+To start without a filename, use `pvim` (or `./pvim` in the download directory). The splash, titled “pvim - portable vim clone”,
 appears with “Support Us at PerlCommunity.org”, centered horizontally and vertically; press any key to dismiss it. That key is consumed by the splash. Press `i`
 again to begin inserting. Save an unnamed buffer using `:w practice.pl`.
 

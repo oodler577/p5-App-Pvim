@@ -36,3 +36,7 @@
   `./pvim` or its installed full path), without a `perl` command prefix. Standalone
   instructions must include chmod and PATH/full-path guidance. Internal tests and
   build probes may invoke explicit interpreters to validate portability.
+
+- Keep the opening title exactly `pvim - portable vim clone`, without a version
+  number. Use -v/--version for version output. Scope portability claims to actual
+  verified platforms and distinguish interactive UI from batch/engine coverage.
