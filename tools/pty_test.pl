@@ -140,7 +140,7 @@ sub case {
         my $dir=tempdir(CLEANUP=>1); $path="$dir/sample.pl"; $session=undef;
         local $SIG{ALRM}=sub { die "PTY test timed out: $name\n" }; alarm 45;
         my $ok=eval { $body->(); 1 }; my $error=$@; alarm 0;
-        fail($error) unless $ok;
+        unless ($ok) { fail($error); diag substr($session->{output},-3000) if $session }
         if ($session) { my $restored=eval { $session->close }; ok($restored,'terminal attributes restored') or diag $@; $session=undef }
         done_testing;
     };
@@ -148,6 +148,13 @@ sub case {
 sub quit_ok { my ($s,$keys)=@_; $s->send(defined($keys)?$keys:":q\r"); is($s->wait_exit,0,'clean exit') or diag $s->{output} }
 sub contains { like($_[0]{output},qr/\Q$_[1]\E/,$_[2] || 'terminal output') }
 sub canonical { ok(($_[0]->lflag & POSIX::ICANON()) ? $_[1] : !$_[1],$_[2] || 'canonical mode') }
+sub wait_file {
+    my ($s,$file)=@_; my $until=Time::HiRes::time()+5;
+    while (!-s $file) {
+        die "Shell probe did not finish: $file\n" if Time::HiRes::time()>$until;
+        $s->drain(.02);
+    }
+}
 sub centered {
     my ($s,$rows,$cols)=@_;
     my @frames=split /\e\[2J\e\[H/,$s->{output}; my $frame=$frames[-1];
@@ -186,11 +193,13 @@ case 'real shell pipeline suspend and fg'=>sub {
     my $probe=quote($perl).' -MIO::Tty -MIO::Tty::Constant=PENDIN -MPOSIX -e '.quote(
         'my $t=POSIX::Termios->new; $t->getattr(0) or die $!; print join(q{,},$t->getiflag,$t->getoflag,$t->getcflag,$t->getlflag & ~PENDIN,$t->getispeed,$t->getospeed,map {$t->getcc($_)} 0..POSIX::NCCS()-1),qq{\n};');
     $s->send($probe.' > '.quote("$path.tty-before")."\r");
+    wait_file($s,"$path.tty-before");
     $s->send("printf 'pipeline text\\n' | ".quote($perl).' '.quote($script)."\r"); $s->drain(.3); contains($s,'pipeline text');
     $s->send("A edited\e"); $s->send("\x1a"); $s->drain(.3);
     like($s->{output},qr/stopped|suspended/i,'shell observed stopped editor');
     $s->send("fg\r"); $s->drain(.3); $s->send(":w $path\r"); $s->send(":q\r");
     $s->send($probe.' > '.quote("$path.tty-after")."\r");
+    wait_file($s,"$path.tty-after");
     is(bytes("$path.tty-after"),bytes("$path.tty-before"),'pipeline tty restored before shell resumed');
     quit_ok($s,"exit\r"); is(bytes($path),"pipeline text edited\n",'buffer survives suspend');
 };
