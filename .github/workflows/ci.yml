@@ -33,6 +33,7 @@ jobs:
           prove -v t
           python tools/pipe_test.py
       - name: POSIX terminal integration
+        timeout-minutes: 3
         if: runner.os != 'Windows'
         run: python3 tools/pty_test.py
       - name: Bounded-memory storage benchmark

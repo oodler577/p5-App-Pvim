@@ -18,3 +18,5 @@ jobs:
                 core.info(`Cancelled superseded verification ${run.id}`);
               }
             }
+
+# Also collect logs from terminal-test stalls.
