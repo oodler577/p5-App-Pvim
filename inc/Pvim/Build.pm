@@ -40,6 +40,7 @@ App::Pvim - install the portable Perl-centric pvim editor
 =head1 SYNOPSIS
 
   pvim file.pl
+  printf 'hi\n' | pvim
   pvim -v
   pvim --help
   pvim --manual
@@ -53,7 +54,14 @@ pvim executable, which can also be copied and run independently with Perl 5.10+.
 
 The editor uses the standard Perl library. Perl::Tidy is optional for formatting.
 Interactive use requires a POSIX tty and ANSI terminal; native Windows supports
-batch mode. See the executable's manual for controls, safety and current limits.
+batch mode. See C<man pvim> or C<pvim --manual> for the complete controls,
+stdin import, shell filters, file safety and current limits. This is an
+experimental, byte-oriented editor with no crash recovery, visual mode or tabs.
+
+=head1 BUGS AND SUPPORT
+
+Report bugs at L<https://github.com/oodler577/pvim/issues>, including C<pvim -v>,
+operating system, terminal and a minimal reproduction without private data.
 
 =head1 LINKS
 

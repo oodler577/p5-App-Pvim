@@ -40,3 +40,10 @@
 - Keep the opening title exactly `pvim - portable vim clone`, without a version
   number. Use -v/--version for version output. Scope portability claims to actual
   verified platforms and distinguish interactive UI from batch/engine coverage.
+
+- Confirmed Vim exception: interactive no-filename startup imports non-tty stdin
+  automatically. Explicit `pvim -` also imports stdin; batch requires explicit `-`.
+  Keep pipe data separate from controlling-terminal keystrokes and mark imports
+  unnamed/modified, including empty input. No screen output into downstream pipes.
+- CPAN GatherDir uses an allowlist. Validate MANIFEST and metadata in built tests;
+  keep caches, editor backups, build products, CI and agent instructions out.

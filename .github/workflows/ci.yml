@@ -90,7 +90,13 @@ jobs:
           sudo apt-get install -y libdist-zilla-perl
       - name: Build and test App::Pvim distribution
         run: |
+          # Deliberately seed residues to prove GatherDir excludes them.
+          mkdir -p tools/__pycache__
+          touch CPAN-UNINTENDED.txt tools/audit-residue.log tools/__pycache__/audit.pyc
           dzil build
+          version=$(perl pvim --version | cut -d' ' -f2)
+          python3 tools/cpan_audit.py "App-Pvim-${version}"
+          rm CPAN-UNINTENDED.txt tools/audit-residue.log tools/__pycache__/audit.pyc
           dzil test
       - name: Verify user-local install from CPAN tarball
         run: |

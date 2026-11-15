@@ -1,3 +1,12 @@
+0.1.9  2026-11-15
+     - added streaming stdin import via pvim - and user-confirmed automatic
+       detection for interactive piped/redirected input without a filename
+     - read keystrokes from the controlling terminal, mark imports unnamed and
+       unsaved, skip splash, and support explicit stdin import in batch mode
+     - added pipe/PTY/streaming tests and documentation, including empty input,
+       mixed endings, unsaved guards and no-terminal behavior
+     - restricted CPAN archive gathering and added manifest/metadata/POD audits
+
 0.1.8  2026-11-14
      - changed the versionless opening title to pvim - portable vim clone
      - audited portability against completed CI and documented interactive,

@@ -3,7 +3,7 @@
 | Symptom | Check or action |
 | --- | --- |
 | `Can't locate ... in @INC` at startup | Check that the host's complete Perl standard library is installed. A minimal binary may omit core packages. |
-| Interactive mode requires a POSIX tty | Run inside a terminal on Linux/macOS/WSL, not an output-only IDE panel, redirected pipe, or native Windows console. |
+| Interactive mode requires a POSIX tty | Run inside a terminal on Linux/macOS/WSL, not an output-only IDE panel, downstream output pipe, or native Windows console. Piped input is supported with a controlling terminal. |
 | `Permission denied` launching the file | Run `chmod +x /path/to/pvim`, then call `/path/to/pvim` directly. Check that Perl is on PATH and the filesystem permits execution. |
 | `Perl::Tidy is unavailable` | Optional formatter must be installed for the same interpreter. Ordinary editing does not need it. |
 | New file has no name | Save with `:w filename.pl`. |
@@ -28,3 +28,7 @@ For a useful bug report, include OS, `perl -V`, terminal emulator, locale, file
 size/line count/longest line, exact keys, expected and actual text, and a minimal reproducing file. Reproduce on a disposable file and attach the
 smallest relevant example. Report at [Issues](https://github.com/oodler577/pvim/issues).
 See [Testing](Testing) for the human checklist.
+
+For stdin import, a producer must finish before editing begins. A missing
+controlling terminal fails immediately; use `--batch ... -` for automation.
+Imported buffers need `:w filename` and cannot be discarded by plain `:q`.

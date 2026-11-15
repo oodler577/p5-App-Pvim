@@ -98,3 +98,26 @@ Examples on POSIX:
 `pvim -v` intentionally prints the version by user request. Vim uses that flag
 for Vi mode; pvim retains `--version` as well. This exception does not change the
 general policy of following Vim semantics unless a divergence is confirmed.
+
+## Piped and redirected input
+
+```sh
+printf 'hi\n' | pvim
+cat source.pl | pvim -
+pvim < source.pl
+printf 'old\n' | pvim --batch -c 's/old/new/' -c 'w result.txt' -
+```
+
+`pvim -` imports stdin, like Vim. With no filename, interactive `pvim` also detects
+non-terminal stdin automatically: a confirmed exception to Vim's explicit `-`.
+The imported buffer is unnamed and modified, even for empty input. Save with
+`:w filename`; `:q` protects it and `:q!` discards it. The splash is skipped.
+Use `pvim ./-` to edit a file named `-`.
+
+Input streams to private disk storage until EOF; a never-ending producer delays
+startup indefinitely. Existing temporary-disk and giant-line limits apply.
+Keystrokes come separately from `/dev/tty`; input text is never editor commands.
+No controlling terminal or redirected stdout produces a clear error before input
+is consumed. This does not implement `producer | pvim | consumer` output routing.
+With a named file, stdin is not imported and interactive stdin must be a terminal.
+Batch imports stdin only with explicit `-`, needs no tty, and saves only on request.

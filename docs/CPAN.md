@@ -21,6 +21,7 @@ bundle is required.
 
 ```sh
 dzil build
+python3 tools/cpan_audit.py App-Pvim-VERSION
 dzil test
 ```
 
@@ -61,3 +62,25 @@ requirements. The standalone GitHub asset still avoids the build/install step.
 
 Normal CI and GitHub release workflows never run `dzil release` or upload to PAUSE.
 The CPAN tarball is published as a GitHub asset for review and future use.
+
+## Archive policy and POD
+
+`GatherDir` allows the runtime, release/license files, author configuration and
+source subtrees, with explicit cache/backup/build exclusions. CI seeds unwanted
+root, log and bytecode files before building, then audits the actual kit against
+an independent member allowlist and MANIFEST. It checks metadata, Perl licensing,
+core-only runtime prerequisites, identical generated runtime and valid POD in
+both executable copies and App::Pvim. Run the audit on a fresh build before
+MakeMaker creates extra files. Python and Pod::Checker are author checks only.
+
+The command POD supplies the installed `man pvim`, `--help` and `--manual`:
+installation, options, full supported controls, stdin import, Perl tooling,
+shell filters, large-file costs, byte-oriented encoding, save safety, unsupported
+features, bug reporting, author and license. App::Pvim has a concise CPAN landing
+manual pointing to the complete command manual and wiki.
+
+Before a first PAUSE upload, verify the releasing account's App::Pvim namespace
+permissions and explicitly authorize publication. No credentials or ownership
+are inferred from a successful build. Broadly useful missing features (Unicode
+editing, recovery, visual mode, tabs) are documented limitations rather than
+packaging blockers; human terminal testing remains valuable before publishing.

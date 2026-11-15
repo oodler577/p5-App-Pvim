@@ -15,6 +15,7 @@ and [Vim differences](https://github.com/oodler577/pvim/wiki/Vim-Differences).
 
 ```sh
 pvim hello.pl
+printf 'hi\n' | pvim
 pvim -v
 pvim --help
 pvim --manual
@@ -35,6 +36,11 @@ Download the standalone file, source archive and checksums from
 [Wiki and quick start](https://github.com/oodler577/pvim/wiki) cover installation,
 controls, Perl features and troubleshooting. Wiki sources are maintained in
 `docs/wiki/` and synchronized from master by the development VM.
+
+Piped or redirected input without a filename opens an unnamed, unsaved buffer;
+`pvim -` explicitly imports stdin too. Save with `:w filename`. Keystrokes come
+from `/dev/tty`, and screen output must remain on a terminal. In `--batch` mode,
+stdin import requires explicit `-`. See `pvim --manual` for limits and examples.
 
 ## First steps
 

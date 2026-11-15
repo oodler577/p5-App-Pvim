@@ -6,6 +6,7 @@ import os
 import pty
 import re
 import select
+import shlex
 import signal
 import struct
 import subprocess
@@ -19,11 +20,22 @@ PERL = os.environ.get('PVIM_PERL', 'perl')
 SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pvim'))
 
 class Session:
-    def __init__(self, *args, rows=24, cols=80):
+    def __init__(self, *args, rows=24, cols=80, piped=None, shell=False, controlling=True):
         self.master, self.slave = pty.openpty()
         self.before = termios.tcgetattr(self.slave)
         fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack('HHHH', rows, cols, 0, 0))
-        self.proc = subprocess.Popen([PERL, SCRIPT, *args], stdin=self.slave, stdout=self.slave, stderr=self.slave, preexec_fn=os.setpgrp)
+        def controlling_terminal():
+            os.setsid()
+            fcntl.ioctl(self.slave, termios.TIOCSCTTY, 0)
+        command = ['/bin/sh', '-i'] if shell else [PERL, SCRIPT, *args]
+        self.proc = subprocess.Popen(command,
+            stdin=self.slave if piped is None else subprocess.PIPE,
+            stdout=self.slave, stderr=self.slave,
+            preexec_fn=(controlling_terminal if controlling else os.setsid)
+                if shell or piped is not None else os.setpgrp)
+        if piped is not None:
+            self.proc.stdin.write(piped)
+            self.proc.stdin.close()
         self.output = b''
         self.drain(0.25)
     def drain(self, seconds=0.10):
@@ -95,6 +107,66 @@ class TerminalTests(unittest.TestCase):
         self.s = Session(*args, **kwargs)
         self.assertIsNone(self.s.proc.poll(), self.s.output.decode(errors='replace'))
         return self.s
+    def test_piped_input_automatic_and_explicit(self):
+        for args in [(), ('-',)]:
+            with self.subTest(args=args):
+                s = self.start(*args, piped=b'hi\r\n:q!\nlast')
+                self.assertNotIn(b'Press any key', s.output)
+                self.assertIn(b'hi', s.output)
+                s.send(b':q\r')
+                self.assertIsNone(s.proc.poll(), 'import must be guarded as unsaved')
+                self.assertIn(b'nsaved', s.output)
+                # Filters must inherit their own input after stdin was rebound.
+                s.send(b':.! tr h H\r')
+                self.assertIn(b'Hi', s.output)
+                s.send(b'u')
+                # Bare shell commands must see the keyboard terminal on fd 0.
+                s.send(b':! test -t 0 && printf KEYBOARD_TTY\r')
+                self.assertIn(b'KEYBOARD_TTY', s.output)
+                s.send(b'\r')
+                s.send((':w ' + self.path + '\r').encode())
+                s.send(b':q\r')
+                self.assertEqual(s.proc.wait(timeout=5), 0)
+                self.assertTrue(s.output.endswith(b'\n'))
+                with open(self.path, 'rb') as f:
+                    self.assertEqual(f.read(), b'hi\r\n:q!\nlast')
+                self.assertTrue(s.close())
+                self.s = None
+                os.unlink(self.path)
+    def test_pipe_requires_controlling_terminal(self):
+        self.s = Session(piped=b'hi', controlling=False)
+        self.assertNotEqual(self.s.proc.wait(timeout=5), 0)
+        self.s.drain()
+        self.assertIn(b'No controlling terminal', self.s.output)
+        self.assertNotIn(b'\x1b[?1049h', self.s.output)
+    def test_pipeline_suspend_and_fg_in_real_shell(self):
+        s = self.start(shell=True)
+        command = "printf 'pipeline text\\n' | " + shlex.quote(PERL) + ' ' + shlex.quote(SCRIPT)
+        s.send(command.encode() + b'\r')
+        s.drain(0.3)
+        self.assertIn(b'pipeline text', s.output)
+        s.send(b'A edited\x1b')
+        s.send(b'\x1a')
+        s.drain(0.3)
+        self.assertRegex(s.output.lower(), rb'stopped|suspended')
+        s.send(b'fg\r')
+        s.drain(0.3)
+        s.send((':w ' + self.path + '\r').encode())
+        s.send(b':q\r')
+        s.send(b'exit\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
+        with open(self.path, 'rb') as f:
+            self.assertEqual(f.read(), b'pipeline text edited\n')
+
+    def test_empty_pipe_and_terminal_restore_on_signal(self):
+        s = self.start(piped=b'')
+        s.send(b':q\r')
+        self.assertIsNone(s.proc.poll())
+        s.proc.terminate()
+        self.assertNotEqual(s.proc.wait(timeout=5), 0)
+        s.drain()
+        self.assertTrue(s.output.endswith(b'\n'))
+
     def test_ctrl_z_preserves_insert_and_unsaved_text(self):
         s = self.start('--no-splash', self.path)
         s.send(b'ifirst')

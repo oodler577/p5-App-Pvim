@@ -138,20 +138,23 @@ sub fingerprint {
     return $digest->hexdigest;
 }
 sub load {
-    my ($class, $path) = @_;
+    my ($class, $path, $input) = @_;
     my $s = $class->new;
     $s->{path} = $path if defined($path) && length($path);
-    unless (defined($path) && length($path) && -e $path) {
+    unless ($input || (defined($path) && length($path) && -e $path)) {
         die "Refusing dangling symlink\n" if defined($path) && -l $path;
         $s->splice_lines(0, 0, $s->append('', 0)); $s->{fingerprint} = ''; return $s;
     }
-    die "Not a regular file: $path\n" unless -f $path;
-    open my $fh, '<', $path or die "Read $path: $!\n"; binmode $fh;
+    die "Not a regular file: $path\n" unless $input || -f $path;
+    my $fh = $input;
+    unless ($fh) { open $fh, '<', $path or die "Read $path: $!\n" }
+    binmode $fh;
+    my $label = $input ? 'standard input' : $path;
     my $digest = Digest::SHA->new(256);
     my ($offset, $start, $prev, $first, $last_term) = (0, 0, '', 1, 0);
     while (1) {
         my $got = read($fh, my $chunk, 65536);
-        die "Read $path: $!\n" unless defined $got;
+        die "Read $label: $!\n" unless defined $got;
         last unless $got;
         $digest->add($chunk);
         print {$s->{data}} $chunk or die "Temporary data: $!\n";
@@ -165,11 +168,12 @@ sub load {
         }
         $offset += $got; $prev = substr($chunk, -1);
     }
-    close $fh or die "Close $path: $!\n";
+    unless ($input) { close $fh or die "Close $path: $!\n" }
     if ($start < $offset || !$offset) { $s->_record($start, $offset - $start, 0); $last_term = 0 }
     $s->{final} = $last_term ? 1 : 0;
     $s->{fingerprint} = $digest->hexdigest;
     $s->{pieces} = [[0, $s->{next}]]; $s->reindex;
+    if ($input) { $s->{state} = ++$s->{serial}; $s->{fingerprint} = '' }
     return $s;
 }
 sub write_to {
@@ -679,18 +683,18 @@ sub new { return bless { top => 0, left => 0, previous => [], rows => 24, cols =
 sub start {
     my ($t) = @_;
     die "Interactive mode requires a POSIX tty and ANSI/VT100 terminal; use --batch otherwise\n" if $^O eq 'MSWin32' || !-t STDIN || !-t STDOUT;
-    my $old = POSIX::Termios->new; $old->getattr(0) or die "tcgetattr: $!\n";
-    my $raw = POSIX::Termios->new; $raw->getattr(0);
+    my $old = POSIX::Termios->new; $old->getattr(fileno(STDIN)) or die "tcgetattr: $!\n";
+    my $raw = POSIX::Termios->new; $raw->getattr(fileno(STDIN));
     $raw->setlflag($raw->getlflag & ~(POSIX::ICANON() | POSIX::ECHO() | POSIX::ISIG() | POSIX::IEXTEN()));
     $raw->setiflag($raw->getiflag & ~(POSIX::IXON() | POSIX::ICRNL() | POSIX::INLCR() | POSIX::ISTRIP()));
     $raw->setcc(POSIX::VMIN(),1); $raw->setcc(POSIX::VTIME(),0);
-    $t->{old} = $old; $raw->setattr(0,POSIX::TCSANOW()) or die "tcsetattr: $!\n";
+    $t->{old} = $old; $raw->setattr(fileno(STDIN),POSIX::TCSANOW()) or die "tcsetattr: $!\n";
     binmode STDIN; binmode STDOUT; $| = 1;
     print "\e[?1049h\e[?2004h\e[2J\e[H";
 }
 sub stop {
     my ($t) = @_;
-    if (my $old = delete $t->{old}) { $old->setattr(0,POSIX::TCSANOW()); print "\e[0m\e[?2004l\e[?1049l\e[?25h\n" }
+    if (my $old = delete $t->{old}) { $old->setattr(fileno(STDIN),POSIX::TCSANOW()); print "\e[0m\e[?2004l\e[?1049l\e[?25h\n" }
 }
 sub suspend {
     my ($t) = @_;
@@ -834,7 +838,7 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.8';
+our $VERSION = '0.1.9';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash); my @commands;
@@ -845,7 +849,19 @@ sub run {
     if ($manual) { Pod::Usage::pod2usage(-exitval=>'NOEXIT',-verbose=>2,-noperldoc=>1); return 0 }
     if ($version) { print "pvim $VERSION (Perl $])\n"; return 0 }
     die "One file at a time; tabs are planned\n" if @args > 1;
-    my $e = PVim::Editor->new(PVim::Store->load($args[0]));
+    my $from_stdin = (@args && $args[0] eq '-') || (!$batch && !@args && !-t STDIN);
+    my $keyboard;
+    if ($from_stdin && !$batch) {
+        die "Interactive stdin import requires a POSIX terminal; use --batch otherwise\n"
+            if $^O eq 'MSWin32' || !-t STDOUT;
+        open $keyboard, '<', '/dev/tty'
+            or die "No controlling terminal for stdin import; use --batch with explicit '-' otherwise: $!\n";
+    }
+    my $e = PVim::Editor->new($from_stdin
+        ? PVim::Store->load(undef, \*STDIN) : PVim::Store->load($args[0]));
+    # Rebind descriptor 0 as well as Perl's handle so external shell commands
+    # inherit the keyboard terminal rather than the exhausted producer pipe.
+    if ($keyboard) { open STDIN, '<&', $keyboard or die "Attach keyboard terminal: $!\n" }
     for my $cmd (@commands) { $e->ex($cmd); last if $e->{quit} }
     return 0 if $batch || $e->{quit};
     my $t = PVim::Terminal->new;
@@ -865,7 +881,7 @@ sub run {
     $t->{on_resume} = sub { $e->{redraw} = 1; $t->{in_splash} ? $t->splash_frame : $t->draw($e) };
     local $SIG{TSTP} = sub { $t->suspend };
     my $ok = eval {
-        $t->start; $t->splash unless @args || $no_splash;
+        $t->start; $t->splash unless @args || $no_splash || $from_stdin;
         my $pasting = 0;
         while (!$e->{quit}) {
             $t->draw($e) unless $pasting;
@@ -901,6 +917,8 @@ pvim - a portable, Perl-centric vi-style terminal editor
 =head1 SYNOPSIS
 
   pvim [--no-splash] [file]
+  printf 'hi\n' | pvim
+  printf 'hi\n' | pvim -
   pvim --help
   pvim --manual
   pvim -v
@@ -950,6 +968,32 @@ Suppress the initial unnamed-buffer splash. Opening splash text is centered
 horizontally and vertically, and recenters when the terminal is resized.
 
 =back
+
+=head1 STANDARD INPUT
+
+C<pvim -> imports standard input into an unnamed, modified buffer, as in Vim.
+Interactive C<pvim> with no filename also imports redirected or piped stdin
+when stdin is not a terminal. This automatic detection is a user-confirmed
+exception to Vim's explicit C<-> convention. Use C<pvim ./-> for a file named C<->.
+With a named file, stdin is not imported; interactive use requires terminal stdin.
+
+  printf 'hi\n' | pvim
+  cat source.pl | pvim -
+  pvim < source.pl
+  printf 'old\n' | pvim --batch -c 's/old/new/' -c 'w result.txt' -
+
+Input is streamed to the disk-backed store until EOF, preserving bytes and line
+endings. Empty input is also marked unsaved. C<:w filename> saves it; C<:q> refuses
+to discard it, and C<:q!> explicitly discards it. No startup splash is shown.
+A producer that never closes its output prevents editing from starting; finish
+or stop that producer first. Temporary-disk and giant-line limits still apply.
+
+Interactive keystrokes are read separately from the POSIX controlling terminal
+(C</dev/tty>); input text is never executed as editor commands. Terminal stdout
+is required. Without a controlling terminal, startup fails before consuming the
+input. Redirecting screen output into another pipeline is not supported.
+C<--batch> imports stdin only with explicit C<-> and requires no terminal.
+It never writes the imported buffer unless a write command is supplied.
 
 =head1 NORMAL MODE
 
@@ -1139,6 +1183,18 @@ The executable uses the Perl interpreter on PATH.
 The standalone route needs no root, compiler, make, module installation or
 separate fat-packing step. The release's C<pvim> file is already self-contained.
 See README.md and docs/TESTING.md for CI and human-test instructions.
+
+=head1 BUGS AND SUPPORT
+
+This is an experimental editor for human testing. Keep backups of important
+files; crash recovery is not implemented. Supported controls and known limits
+are listed above. Report bugs at L<https://github.com/oodler577/pvim/issues>.
+Include C<pvim -v>, operating system, terminal and a minimal reproduction;
+remove private file contents. Documentation: L<https://github.com/oodler577/pvim/wiki>.
+
+=head1 SEE ALSO
+
+L<App::Pvim>, L<Perl::Tidy>, L<https://github.com/oodler577/pvim>
 
 =head1 AUTHOR
 

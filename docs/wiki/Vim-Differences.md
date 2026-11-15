@@ -69,3 +69,8 @@ not merely replaying the last key and deserves its own tests.
 Tabs, window splits, blockwise visual selection, comprehensive Perl parsing,
 Unicode grapheme editing and language-server integration are larger projects and
 are not included in the small-feature shortlist.
+
+Interactive `producer | pvim` automatically imports stdin when no filename is
+provided. This is a confirmed exception to Vim's explicit `vim -` convention.
+`pvim -` is also supported. Imports are unnamed and modified; use `:w filename`.
+Keystrokes use `/dev/tty`; stdout must remain a terminal. Batch requires explicit `-`.

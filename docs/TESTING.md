@@ -55,3 +55,11 @@ Use disposable copies of real Perl sources for initial testing.
 
 Record OS, `perl -V`, terminal emulator, locale, file size/line count/longest line,
 exact keys, expected/actual text, and a minimal reproducing sample. Report data-loss or terminal-restoration defects before cosmetic issues.
+
+
+Stdin import tests cover byte/line-ending round trips, empty-input protection,
+explicit batch editing, command-looking input as data, no-terminal failures and
+streaming CRLF boundaries. POSIX PTYs attach a controlling terminal separately
+from piped stdin, test automatic and explicit imports, and check terminal restore.
+The CPAN CI job also seeds stray files and runs `tools/cpan_audit.py` on the fresh
+build to verify file gathering, metadata and executable/module POD.
