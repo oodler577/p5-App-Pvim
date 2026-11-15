@@ -1,7 +1,10 @@
 # App::Pvim distribution preparation
 
-This project is prepared for eventual CPAN publication as **App::Pvim**. No upload
-to CPAN/PAUSE is part of the current work.
+The distribution is **App::Pvim**, prepared for its first CPAN trial release.
+Its purpose is a capable Vim replacement for restricted accounts where Perl is
+available, Vim isn't, and root, gcc or make may be unavailable. The standalone
+file is the option for those accounts; the CPAN tarball needs standard Perl build
+tools including make, but pvim itself has no C code to compile.
 
 The source of the editor remains the root `pvim` file. `dist.ini` loads the local
 `inc::Pvim::Build` author plugin, which extracts its version and generates:
@@ -44,7 +47,8 @@ make install
 "$HOME/.local/pvim/bin/pvim" -v
 ```
 
-The command requires only Perl 5.10+ with its standard library. Perl::Tidy remains
+At runtime the command requires Perl 5.10+ with its standard library, a POSIX
+terminal for interactive editing, and writable temporary space. Perl::Tidy remains
 an optional formatter. Native Windows supports batch mode; interactive use needs
 a POSIX tty. Python/PTY tests and author tooling are not consumer install-time
 requirements. The standalone GitHub asset still avoids the build/install step.

@@ -1,3 +1,11 @@
+0.1.11  2026-11-15
+     - rewrote POD, App::Pvim's CPAN description, README and wiki around the goal
+       of a capable Vim replacement for restricted accounts where Perl exists
+       but Vim, install privileges, gcc or make may be unavailable
+     - led installation docs with the standalone route and clarified the standard
+       library, terminal, disk and account requirements versus CPAN build tools
+     - refreshed portability evidence and kept current feature limits explicit
+
 0.1.10  2026-11-15
      - replaced the hanging native-Windows IPC::Open3 test harness with real
        descriptor redirection and independent subprocess pipe integration tests

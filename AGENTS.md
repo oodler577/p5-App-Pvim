@@ -47,3 +47,11 @@
   unnamed/modified, including empty input. No screen output into downstream pipes.
 - CPAN GatherDir uses an allowlist. Validate MANIFEST and metadata in built tests;
   keep caches, editor backups, build products, CI and agent instructions out.
+
+- Describe the goal as a highly capable, Perl-centric Vim replacement for restricted
+  accounts where Perl exists but Vim, install privileges, gcc or make may not.
+  Distinguish that goal from the current supported feature set. Lead installation
+  docs with the standalone route; CPAN tarballs still need standard Perl build tools.
+- Keep public POD/docs direct and conversational, in the author's voice. Remove
+  chat-history phrases such as "user-confirmed" from user-facing documentation;
+  retain compatibility decisions in these project instructions.

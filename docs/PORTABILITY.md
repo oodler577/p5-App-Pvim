@@ -1,4 +1,12 @@
-# Portability contract
+# Portability and restricted hosts
+
+pvim is intended to become a highly capable Vim replacement for accounts where
+Perl is available but Vim is missing and installing packages is out of reach.
+Shared web hosting and minimal Unix installs without gcc or make are intended
+use cases. The standalone file needs neither, but the account still needs an
+interactive shell/terminal, permission to run scripts and writable temporary
+space. The test record below covers platforms, not every hosting provider's
+account policy.
 
 - Runtime: one file; full Perl 5.10.0+ with its bundled core modules.
 - UI: POSIX Termios plus ANSI/VT100 escapes. Linux and macOS have PTY integration
@@ -24,7 +32,8 @@ The splash reads **pvim - portable vim clone**. Here, portable means that the
 single-file source and tested command subset run across the environments below
 without a privileged application install or non-core runtime modules. It does not
 mean every system with a Perl binary, every terminal, or all of Vim's behavior.
-For technical descriptions, **portable Perl vi-style editor** is the precise scope.
+The intended replacement is being built in stages; the command manual records
+what the current release can do.
 
 The implementation remains an early Vim-like subset. There is no Vimscript/plugin
 compatibility, visual selection, tabs, splits, complete Unicode editing, crash
@@ -33,17 +42,16 @@ recovery or full Vim command/regex grammar. Read the embedded manual and
 
 ## Verification record
 
-Audited against the completed **v0.1.7** workflow before the title/documentation
-update: [passing CI run](https://github.com/oodler577/pvim/actions/runs/43676202813).
-All **26 workflow jobs** passed, including 25 verification jobs and publication.
-The v0.1.8 tag repeats the same release gate; a configured job is not itself
-proof of a passed test.
+The completed **v0.1.10** [CI run](https://github.com/oodler577/pvim/actions/runs/43679703152)
+passed all **26 workflow jobs**, including 25 verification jobs and publication.
+Later tags repeat this gate. The table records tests that ran successfully;
+adding a job to a workflow alone doesn't establish support.
 
 | Environment | Tested Perl versions | Evidence and support scope |
 | --- | --- | --- |
-| GitHub Linux x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 18 real POSIX PTY scenarios |
-| GitHub macOS ARM64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 18 real POSIX PTY scenarios |
-| GitHub Windows x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Engine, CLI, ex and batch suite; native interactive UI unavailable |
+| GitHub Linux x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 22 real POSIX PTY scenarios and OS-pipe integration |
+| GitHub macOS ARM64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Core/CLI/POD suite and 22 real POSIX PTY scenarios and OS-pipe integration |
+| GitHub Windows x86-64 runner | 5.10.1, 5.16, 5.24, 5.32, 5.40, 5.42 | Engine, CLI, ex, batch and OS-pipe integration; native interactive UI unavailable |
 | Debian bookworm slim | Distro Perl | Core suite as unprivileged nobody; separate container UI tests are not run |
 | Ubuntu 24.04 container | Distro Perl | Core suite as unprivileged nobody |
 | Alpine 3.22 / musl | Distro Perl | Core suite as unprivileged nobody |
@@ -53,7 +61,7 @@ proof of a passed test.
 | App::Pvim packaging job | Runner Perl + author Dist::Zilla | Build, distribution tests, user-local install and command/module version |
 | Development VM | Ubuntu 24.04.4 x86-64, Perl 5.38.2 | Core and terminal suites, standalone/CPAN packaging, nobody-user install, historical 1/3 GiB benchmarks |
 
-The suite reports **2,692 Perl tests**; platform/build-specific skips apply.
+The suite reports **2,719 Perl tests**; platform/build-specific skips apply.
 The built CPAN distribution additionally executes the generated-module/script
 checks that skip in a raw checkout. Python is used only by author/CI integration
 tests, not by the installed editor.
@@ -64,9 +72,12 @@ versions are tested; this is not evidence that every intermediate patch release
 or custom Perl configuration works. GitHub `*-latest` runner images may evolve;
 the linked job logs retain the actual runner and interpreter details.
 
-macOS PTY verification masks only the kernel's PENDIN state flag, set when returning
-to canonical mode. All other terminal flags, speeds and control characters are
-compared. See [Apple's terminal driver](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c).
+PTY verification compares terminal flags, speeds and control characters. Darwin's
+kernel PENDIN state bit is masked when comparing restored canonical state; the
+real-shell probe masks that state bit on both platforms. Darwin revokes a tty
+when its session leader exits, so owned-session teardown also checks the restore
+sequence. The shell pipeline test compares tty state before and after pvim while
+the shell and tty remain alive. See [Apple's terminal driver](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c).
 
 ## Not yet verified
 

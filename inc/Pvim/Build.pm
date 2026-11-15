@@ -35,7 +35,7 @@ __END__
 
 =head1 NAME
 
-App::Pvim - install the portable Perl-centric pvim editor
+App::Pvim - a portable Vim replacement for restricted environments
 
 =head1 SYNOPSIS
 
@@ -47,21 +47,37 @@ App::Pvim - install the portable Perl-centric pvim editor
 
 =head1 DESCRIPTION
 
-This application distribution installs the single-file pvim command. This module
-provides its CPAN namespace and version metadata; it does not expose an editor
-library API. All editor runtime code and its complete manual are in the installed
-pvim executable, which can also be copied and run independently with Perl 5.10+.
+pvim is for systems where Perl is available but Vim isn't, and you don't have
+install privileges. Think cheap shared web hosting or a minimal Unix install
+without gcc, make, or access to the package manager. I'd still like a capable
+editor on those accounts.
 
-The editor uses the standard Perl library. Perl::Tidy is optional for formatting.
-Interactive use requires a POSIX tty and ANSI terminal; native Windows supports
-batch mode. See C<man pvim> or C<pvim --manual> for the complete controls,
-stdin import, shell filters, file safety and current limits. This is an
-experimental, byte-oriented editor with no crash recovery, visual mode or tabs.
+The goal is a highly capable, Perl-centric Vim replacement that stays in one
+Perl file and runs on Perl 5.10+ with core modules. Copy the standalone file into
+your account, make it executable, and use it. No root or compiler needed.
+Perl::Tidy is optional if you want formatting.
+
+This distribution installs the C<pvim> command. The App::Pvim module holds the
+namespace and version; all editing code and the full manual live in the command.
+Use C<man pvim> or C<pvim --manual> for controls, stdin import, shell filters,
+large-file handling and file safety. Use C<pvim --help> for a short reminder.
+
+It is still early: visual selection, tabs, splits, dot-repeat, Vimscript and
+plugins aren't implemented. Editing is byte oriented and there is no crash
+recovery. Interactive tests cover Linux and macOS; native Windows has batch
+support. The wiki lists current features, limits and tested platforms.
+
+Installing this tarball needs the usual Perl build tools, including make, but
+no C compiler for pvim itself. If make is missing, use the standalone file from
+L<https://github.com/oodler577/pvim/releases>. It needs a full Perl standard
+library, a POSIX terminal and writable temporary space, plus permission to run
+your own scripts. No Dist::Zilla or Moose is needed on the target account.
 
 =head1 BUGS AND SUPPORT
 
-Report bugs at L<https://github.com/oodler577/pvim/issues>, including C<pvim -v>,
-operating system, terminal and a minimal reproduction without private data.
+Please report bugs at L<https://github.com/oodler577/pvim/issues>. Include
+C<pvim -v>, the OS and terminal, and the smallest example that shows the problem.
+Try it on copies of your files first, and leave private data out of bug reports.
 
 =head1 LINKS
 

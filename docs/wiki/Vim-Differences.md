@@ -1,13 +1,14 @@
 # Vim and XVI2 differences
 
-The splash title **pvim - portable vim clone** refers to an early vi-style subset.
-pvim is a small vi-style editor, not a compatible implementation of Vim.
+The goal is a highly capable Vim replacement for restricted accounts where
+Perl is available. The current release covers the basics; this page records
+what differs from Vim and what still needs implementing.
 [Portability](Portability) separates verified interactive, batch-only and untested platforms.
 Supported controls are fully listed in [Command Reference](Command-Reference).
 
 | Area | Current behavior |
 | --- | --- |
-| Version flag | `pvim -v` prints the version; explicitly confirmed exception to Vim's Vi-mode flag |
+| Version flag | `pvim -v` prints the version; Vim uses that flag for Vi mode |
 | Files | One active buffer; tabs and splits deferred |
 | Selection | No visual selection yet |
 | Operators | Repeated line operators and a limited same-line motion set |
@@ -71,6 +72,6 @@ Unicode grapheme editing and language-server integration are larger projects and
 are not included in the small-feature shortlist.
 
 Interactive `producer | pvim` automatically imports stdin when no filename is
-provided. This is a confirmed exception to Vim's explicit `vim -` convention.
+provided. Vim requires explicit `vim -`.
 `pvim -` is also supported. Imports are unnamed and modified; use `:w filename`.
 Keystrokes use `/dev/tty`; stdout must remain a terminal. Batch requires explicit `-`.

@@ -109,7 +109,7 @@ printf 'old\n' | pvim --batch -c 's/old/new/' -c 'w result.txt' -
 ```
 
 `pvim -` imports stdin, like Vim. With no filename, interactive `pvim` also detects
-non-terminal stdin automatically: a confirmed exception to Vim's explicit `-`.
+non-terminal stdin automatically. Vim requires explicit `-`.
 The imported buffer is unnamed and modified, even for empty input. Save with
 `:w filename`; `:q` protects it and `:q!` discards it. The splash is skipped.
 Use `pvim ./-` to edit a file named `-`.

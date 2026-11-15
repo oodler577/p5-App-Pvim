@@ -4,15 +4,7 @@ On a Linux system with a full Perl 5.10+ installation, including Debian with Per
 5.40, open a shell inside your usual terminal emulator. macOS and WSL also provide
 suitable POSIX environments. Native Windows interactive mode is pending.
 
-Install the release with cpanm, then use the command directly:
-
-```sh
-cpanm https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/App-Pvim-@@VERSION@@.tar.gz
-pvim -v
-pvim practice.pl
-```
-
-For the standalone route, no build/install step is needed:
+If you have no install privileges or build tools, use the standalone file:
 
 ```sh
 curl -fL https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl -o pvim
@@ -22,9 +14,18 @@ chmod +x pvim
 ```
 
 If curl is unavailable, download [pvim-standalone.pl](https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl)
-in a browser, save it as `pvim`, make it executable, and run `./pvim practice.pl`.
-Put it in a directory on PATH to invoke it as `pvim` from anywhere. The `pvim`
-release asset contains the same executable bytes.
+on another machine and transfer it to the account. Save it as `pvim` and make it
+executable. Put it in a directory on PATH to call `pvim` from anywhere.
+The `pvim` release asset contains the same bytes.
+
+If you have cpanm and the usual Perl build tools, including make, you can install
+the CPAN-format tarball instead. pvim itself has no C code to compile:
+
+```sh
+cpanm https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/App-Pvim-@@VERSION@@.tar.gz
+pvim -v
+pvim practice.pl
+```
 
 1. Press `i` to enter insert mode.
 2. Type `use strict;`, press Enter, and type `print "hello\n";`.

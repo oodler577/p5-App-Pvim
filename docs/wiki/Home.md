@@ -1,16 +1,24 @@
-# pvim: a Perl-centric vi-style editor
+# pvim: Vim-style editing where Perl is available
 
-Opening title: **pvim - portable vim clone**.
+pvim is for accounts where Perl is there and Vim isn't. No install privileges,
+possibly no gcc or make, but still files to edit. Cheap shared web hosting and
+minimal Unix installs are exactly the sort of places I have in mind.
 
-Current documented version: **@@VERSION@@**. This is an experimental human-testing release implementing a small vi-style subset.
-Interactive support is verified on Linux/macOS; Windows supports batch/engine use.
-See [Portability](Portability) for the evidence and unverified platforms.
+The goal is a **highly capable, Perl-centric Vim replacement for restricted
+environments**, in one Perl file using core modules and Perl 5.10+. Copy the
+standalone file into your account, make it executable, and use it. No root,
+compiler, build step or CPAN module installation needed.
 
-pvim runs from one Perl file with the standard Perl library. It needs no root access,
-compiler, make, curses, or required CPAN packages. Its interactive interface uses a
-POSIX tty and ANSI/VT100 terminal. The command set starts with the everyday controls
-in [Retrodores XVI2](https://github.com/retrodores/XVI/blob/master/readme.txt), plus
-Perl-regex search/substitution, undo/redo and Perl-focused conveniences.
+Current documented version: **@@VERSION@@**. The editing modes, familiar motions,
+search/substitution, undo/redo, shell filters and optional perltidy are here.
+Large files use temporary disk storage. Visual selection, tabs, splits,
+dot-repeat, Vimscript, plugins and crash recovery aren't implemented yet;
+editing is byte oriented. The [full manual](Full-Manual) covers what's available.
+
+You need a full Perl standard library, writable temporary space, a POSIX terminal
+and permission to run your own scripts. Interactive testing covers Linux and
+macOS; native Windows supports batch and engine use. See [Portability](Portability)
+for the test record. The opening title remains **pvim - portable vim clone**.
 
 **Start here:** [Quick Start](Quick-Start) · [Download and Installation](Installation) ·
 [Command Reference](Command-Reference) · [Perl Features](Perl-Features).

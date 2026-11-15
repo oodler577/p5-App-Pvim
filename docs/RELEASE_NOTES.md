@@ -1,27 +1,23 @@
-pvim 0.1.10 adds stdin import:
+pvim 0.1.11 is the documentation pass for the first App::Pvim trial release.
 
-```sh
-printf 'hi\n' | pvim
-cat source.pl | pvim -
-printf 'old\n' | pvim --batch -c 's/old/new/' -c 'w result.txt' -
-```
+pvim is for accounts where Perl is there and Vim isn't: restricted or cheap
+shared web hosting, minimal Unix installs, and other systems where you can't
+install packages and may not have gcc or make. The goal is a highly capable,
+Perl-centric Vim replacement you can copy into your own account and use.
 
-Interactive input streams to the disk-backed store, opens unnamed and unsaved,
-and skips the splash. Keystrokes come from the controlling terminal. Save with
-`:w filename`; `:q` protects even an empty import. No controlling terminal or
-redirected screen output fails clearly. Input is read until EOF, so an endless
-producer prevents editing from starting. Automatic no-filename detection is a
-confirmed exception to Vim's explicit `-`; batch still requires explicit `-`.
+The POD, App::Pvim description, README and wiki now lead with that purpose.
+Standalone installation comes first: one file, Perl 5.10+ and core modules,
+no root, compiler or build step. The docs distinguish those runtime requirements
+from installing the CPAN tarball, which still needs standard Perl build tools
+including make. The installed man page is generated from the revised POD.
 
-Native-Windows pipe tests use an independent subprocess harness; POSIX tests
-cover shell-pipeline suspension/resume and terminal restoration, with Darwin
-session teardown handled explicitly. CI checks have bounded execution times.
+Existing features include undo/redo, search/substitution, shell commands and
+filters, optional perltidy, stdin import and disk-backed large files. Visual
+selection, tabs, splits, dot-repeat, Vimscript, plugins and crash recovery aren't
+implemented yet. Editing is byte oriented. Interactive testing covers Linux and
+macOS; native Windows supports batch and engine use.
 
-CPAN preparation now restricts gathered files and audits the built manifest,
-metadata and POD. The maintained runtime remains one file with core-only
-requirements. No upload to CPAN/PAUSE is performed.
-
-This remains an experimental human-testing release: limited vi-style controls,
-byte-oriented editing, no swap/recovery, visual selection, tabs or syntax
-highlighting. Interactive support is tested on Linux/macOS; native Windows is
-batch/engine-only. Other Unix systems, 32-bit and vintage systems are unverified.
+The splash keeps its versionless title and support message, with a shorter
+purpose-focused description. Editing behavior is unchanged. The CPAN archive
+allowlist and audits remain in place. No upload to PAUSE is performed by CI or
+this GitHub release; review the tarball before the first CPAN trial upload.

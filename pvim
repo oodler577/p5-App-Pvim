@@ -804,7 +804,7 @@ sub draw {
 sub splash_frame {
     my ($t) = @_;
     $t->size;
-    my @text = ('pvim - portable vim clone', '', 'A small, portable, Perl-centric vi-style editor.', '',
+    my @text = ('pvim - portable vim clone', '', 'Vim-style editing where Perl is available.', '',
         'Support Us at PerlCommunity.org', '', 'Press any key to begin.');
     # Keep a one-cell margin and center each line and the whole text block.
     # On short terminals remove blank spacers before trimming actual content.
@@ -838,7 +838,7 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.10';
+our $VERSION = '0.1.11';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash); my @commands;
@@ -912,7 +912,7 @@ __END__
 
 =head1 NAME
 
-pvim - a portable, Perl-centric vi-style terminal editor
+pvim - Vim-style editing for restricted environments
 
 =head1 SYNOPSIS
 
@@ -927,15 +927,44 @@ pvim - a portable, Perl-centric vi-style terminal editor
 
 =head1 DESCRIPTION
 
-The opening title is C<pvim - portable vim clone>. This identifies an early
-vi-style editor with a limited command subset, not a Vim-compatible implementation.
-Interactive portability is tested on Linux and macOS; native Windows supports
-batch/engine use. Other POSIX systems and 32-bit builds are not yet verified.
-This is a human-testing release.
-The editor, disk-backed store, terminal driver, CLI, and this manual are one
-Perl file. No CPAN modules are required. Perl 5.10.0 or later is the target.
-An ANSI/VT100-compatible POSIX terminal is required for interactive use.
-Native Windows supports batch commands and engine tests; use WSL for the UI.
+pvim is for those accounts where Perl is there and Vim isn't. You have a shell,
+files to edit, and no install privileges. Maybe it's cheap shared web hosting.
+Maybe it's a minimal Unix install without gcc, make, or a way to add OS packages.
+I'd still like to have a capable editor there.
+
+The goal is a highly capable, Perl-centric Vim replacement that you can copy
+into your own account and use. One Perl file, core modules, Perl 5.10 and up.
+No root, no compiler, and no CPAN dependency hunt to get the editor running.
+The standalone download includes the editor and this manual.
+
+The basics are here: normal/insert/replace modes, familiar motions, search,
+substitution, undo/redo, shell commands and filters, and optional perltidy.
+Large files use temporary disk storage so opening a big file doesn't require
+putting the whole thing in RAM. Vim is the reference for command behavior;
+search and substitution use Perl regular expressions.
+
+This is still an early release. Visual selection, tabs, splits, dot-repeat,
+Vimscript and plugin support aren't here yet. Text editing is byte oriented,
+and there is no crash recovery. The goal is a useful Vim replacement for these
+systems; the supported commands and present limits are spelled out below.
+
+=head1 REQUIREMENTS
+
+You need Perl 5.10+ with its standard library, a POSIX shell account with an
+ANSI/VT100 terminal, and writable space for temporary files and your edits.
+A hosting account that only runs CGI scripts, without an interactive shell,
+won't provide the terminal needed for full-screen editing. Local scripts must
+be allowed to run under your account's existing restrictions.
+
+The standalone file includes pvim, not Perl itself or missing core libraries.
+Some distributions split the standard library into separate OS packages.
+Perl::Tidy is optional; everything else the editor needs comes with a full Perl.
+
+Interactive tests cover Linux and macOS. Native Windows supports the editing
+engine and batch commands; its console UI isn't implemented. Other Unix systems,
+32-bit builds and vintage machines still need testing. See
+L<https://github.com/oodler577/pvim/blob/master/docs/PORTABILITY.md> for the record.
+The earliest tested Perl is 5.10.1; 5.10.0 is the compatibility target.
 
 =head1 OPTIONS
 
@@ -943,12 +972,13 @@ Native Windows supports batch commands and engine tests; use WSL for the UI.
 
 =item B<--help>, B<-h>
 
-Print usage. B<--manual> prints this full manual without requiring perldoc.
+Print a short usage reminder. B<--manual> prints the full manual, even if
+perldoc is missing.
 
 =item B<--version>, B<-v>
 
-Print editor and interpreter versions. C<-v> is a user-confirmed pvim shortcut;
-Vim reserves that flag for Vi mode and uses C<--version> for version output.
+Print the pvim and Perl versions. Both flags do the same thing here. Vim uses
+C<-v> for Vi mode; in pvim it's a version shortcut.
 
 =item B<--batch>
 
@@ -973,8 +1003,8 @@ horizontally and vertically, and recenters when the terminal is resized.
 
 C<pvim -> imports standard input into an unnamed, modified buffer, as in Vim.
 Interactive C<pvim> with no filename also imports redirected or piped stdin
-when stdin is not a terminal. This automatic detection is a user-confirmed
-exception to Vim's explicit C<-> convention. Use C<pvim ./-> for a file named C<->.
+when stdin is not a terminal. You can use C<echo hi | pvim> directly; Vim asks
+for the explicit C<->. Use C<pvim ./-> for a file named C<->.
 With a named file, stdin is not imported; interactive use requires terminal stdin.
 
   printf 'hi\n' | pvim
@@ -985,8 +1015,8 @@ With a named file, stdin is not imported; interactive use requires terminal stdi
 Input is streamed to the disk-backed store until EOF, preserving bytes and line
 endings. Empty input is also marked unsaved. C<:w filename> saves it; C<:q> refuses
 to discard it, and C<:q!> explicitly discards it. No startup splash is shown.
-A producer that never closes its output prevents editing from starting; finish
-or stop that producer first. Temporary-disk and giant-line limits still apply.
+pvim waits for EOF before editing begins. A command that keeps writing forever
+needs to finish or be terminated first. Temporary-disk and giant-line limits still apply.
 
 Interactive keystrokes are read separately from the POSIX controlling terminal
 (C</dev/tty>); input text is never executed as editor commands. Terminal stdout
@@ -1027,8 +1057,7 @@ edit commands accept a numeric count. Counts on both sides of an operator multip
 
 Insert accepts ASCII, Tab, newline, Backspace (including joining lines), and
 arrows. Escape exits insert. Bracketed paste enters insert mode and treats pasted
-printable text, tabs and newlines as data; other controls are discarded. Normal mode C<g> waits for another C<g>, matching Vim, unlike XVI2's
-single C<g>. C<^> means first nonblank, while C<0> means absolute line start. C<cw> on a word
+printable text, tabs and newlines as data; other controls are discarded. Normal mode C<g> waits for another C<g>, as in Vim. C<^> means first nonblank, while C<0> means absolute line start. C<cw> on a word
 leaves trailing whitespace, as in Vim. Registers clear when opening a new buffer.
 
 =head1 EX COMMANDS
@@ -1068,15 +1097,17 @@ Perl::Tidy materializes the whole source. Failure leaves the buffer unchanged.
 
 =head1 PERL FEATURES
 
-Syntax highlighting is deferred. File text is displayed without language colors.
-The optional yellow line-number gutter and terminal status styling remain.
-There is no language server, completion, buffer-aware C<perl -c> command,
-debugger or integrated test runner yet.
+Perl is the focus, but you can edit other text too. Search and substitution use
+Perl regexes, and C<\t>, C<:pt> and C<:perltidy> can format code if Perl::Tidy is
+installed for the Perl running pvim. The formatter is optional.
 
-C<\t> (backslash then t), C<:pt> and C<:perltidy> invoke optional Perl::Tidy.
-Search and substitution use Perl regexes. Batch commands expose the same editor
-engine for automation. External filters can invoke installed tools explicitly.
-Visual selection, including characterwise C<v> and linewise C<V>, is not present.
+Syntax highlighting can wait; file text is plain for now. Yellow line numbers
+and status colors are available. There is no completion, language server,
+buffer-aware C<perl -c>, debugger or integrated test runner yet.
+
+Batch commands use the same editing engine, so you can use it in scripts too.
+External commands and filters let you use whatever tools the host already has.
+See L</SHELL FILTERS> before using a command that doesn't produce replacement text.
 
 =head1 SHELL FILTERS
 
@@ -1121,25 +1152,23 @@ Shell commands can modify external files; undo reverses only the buffer edit.
 
 =head1 LARGE FILES AND PERFORMANCE
 
-Opening streams the file into a private temporary backing file while building
-a fixed-width disk line index (24 bytes per line). This takes O(file size) time
-and approximately file size plus 24 bytes per line of temporary disk. Indexing
-needs bounded memory. The source snapshot protects the buffer from subsequent
-external writes. Set TMPDIR to a sufficiently large, private, writable disk.
+Large files shouldn't need file-sized amounts of RAM. pvim streams input into
+private temporary files and builds a disk index using 24 bytes per line. Opening
+still means reading the input once. Allow roughly the file size plus the line
+index on temporary disk, with more room for edits and saving. Set C<TMPDIR> to a
+private, writable location with enough space if the host's default is too small.
 
-Line references live in a compact piece list, initially one piece. Navigation
-uses binary search over pieces and fixed-offset disk index reads. Edits append
-to scratch storage; undo snapshots reference pieces, not whole file contents.
-RAM and undo metadata grow with edits and fragmentation, not initial file size.
-Saving streams data. Screen output updates only changed rows.
+Undo keeps references to edited pieces instead of copying the whole buffer.
+RAM use grows with edits and fragmentation, rather than the initial file size.
+Saving streams the text back out. The terminal driver redraws changed rows.
 
-Individual lines, searches, substitutions, and visible-line expansion currently
-materialize a line; giant single lines can use significant RAM and slow typing.
-Search, whole-file substitutions, and saves are synchronous; they can pause the UI.
-Pathological regexes can take arbitrarily long. This is not a promise of bounded
-latency for every file or command. Large-file benchmarks are in tools/benchmark.pl.
-Temporary edit storage and undo history are retained until the buffer closes;
-there is no compaction yet. Use a 64-bit Perl for files beyond 2 GiB.
+There are practical limits. Editing, searching or displaying an individual line
+loads that line into RAM, so a huge single line can be slow and expensive.
+Searches, whole-file substitutions, formatting and saves are synchronous; they
+can pause editing. A bad regex can take a long time. Temporary edit storage and
+undo history aren't compacted until the buffer closes. Use a 64-bit Perl for
+files beyond 2 GiB. Benchmarks live in C<tools/benchmark.pl> and the portability
+notes; they describe tested workloads, not a speed guarantee for every file.
 
 =head1 FILE SAFETY AND ENCODING
 
@@ -1176,21 +1205,42 @@ resize is handled at the next keypress. Native Windows interactive UI is pending
 
 =head1 INSTALLATION
 
-Install the CPAN-format tarball with C<cpanm>, then run C<pvim file.pl> or C<pvim -v>.
-For the standalone download, save it as C<pvim>, run C<chmod +x pvim>, then
-C<./pvim file.pl>. Put it in a directory on PATH to call it as C<pvim> anywhere.
-The executable uses the Perl interpreter on PATH.
-The standalone route needs no root, compiler, make, module installation or
-separate fat-packing step. The release's C<pvim> file is already self-contained.
-See README.md and docs/TESTING.md for CI and human-test instructions.
+If you don't have install privileges, use the standalone file. Download C<pvim>
+or C<pvim-standalone.pl> from L<https://github.com/oodler577/pvim/releases>, save
+it as C<pvim>, and make it executable:
+
+  chmod +x pvim
+  ./pvim file.pl
+
+That's the editor. There is nothing to compile or unpack at startup. It uses
+the Perl interpreter on PATH and needs no make, gcc, module installation or
+separate fat-packing step. The two standalone release assets have identical bytes.
+
+To keep it in your account:
+
+  mkdir -p "$HOME/.local/bin"
+  cp pvim "$HOME/.local/bin/pvim"
+  "$HOME/.local/bin/pvim" -v
+
+Add that directory to PATH if needed, then call C<pvim file.pl> from anywhere.
+You can transfer the file from another machine if the host has no download tool.
+
+The C<App-Pvim-VERSION.tar.gz> release asset is a normal Perl distribution.
+You can point C<cpanm> at its URL and install it under your account. That route
+needs the usual Perl build tools, including make; pvim itself has no C code to
+compile. Choose the standalone file if make is missing too. Consumers don't need
+Dist::Zilla or Moose. C<App::Pvim> supplies the CPAN namespace and version; the
+installed C<pvim> command contains the editor; its POD supplies C<man pvim>.
+
+Use C<pvim --help> for the short version and C<pvim --manual> for this manual.
+Both work offline. The wiki is at L<https://github.com/oodler577/pvim/wiki>.
 
 =head1 BUGS AND SUPPORT
 
-This is an experimental editor for human testing. Keep backups of important
-files; crash recovery is not implemented. Supported controls and known limits
-are listed above. Report bugs at L<https://github.com/oodler577/pvim/issues>.
-Include C<pvim -v>, operating system, terminal and a minimal reproduction;
-remove private file contents. Documentation: L<https://github.com/oodler577/pvim/wiki>.
+Please try it on copies of your files first. There is no crash recovery yet.
+If something breaks, report it at L<https://github.com/oodler577/pvim/issues>.
+Include C<pvim -v>, the OS and terminal, what you typed, and the smallest example
+that shows the problem. Leave private file contents out of the report.
 
 =head1 SEE ALSO
 
@@ -1198,7 +1248,7 @@ L<App::Pvim>, L<Perl::Tidy>, L<https://github.com/oodler577/pvim>
 
 =head1 AUTHOR
 
-Brett Estrade and contributors. Built as an experimental Perl-centric editor.
+Brett Estrade E<lt>OODLER@cpan.orgE<gt> and contributors.
 
 =head1 LICENSE
 

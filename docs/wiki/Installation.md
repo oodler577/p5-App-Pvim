@@ -1,5 +1,10 @@
 # Download and installation
 
+If Vim isn't installed and you can't add packages, use the standalone download.
+That's the route for a restricted account without root, gcc, or even make.
+You still need permission to run scripts in your account and an interactive
+shell/terminal; CGI access alone doesn't provide a full-screen editor.
+
 ## Requirements
 
 - Full Perl **5.10+**, including its standard modules (POSIX, Digest::SHA,
@@ -77,6 +82,7 @@ make install
 "$HOME/.local/pvim/bin/pvim" -v
 ```
 
-This needs make and standard Perl build tools. It requires no root and no
-Dist::Zilla on the consuming machine. The standalone download remains the option
+This needs make and standard Perl build tools. There is no C code in pvim to
+compile, so pvim itself needs no gcc. You need neither root nor Dist::Zilla on
+the consuming machine. The standalone download remains the option
 when you want to avoid a build/install step entirely. See [Releases](Releases).

@@ -2,16 +2,31 @@
 
 [![Portability CI](https://github.com/oodler577/pvim/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/oodler577/pvim/actions/workflows/ci.yml)
 
-A Perl-centric vi-style editor in **one Perl file**, targeting **Perl 5.10+**.
-An experimental human-testing release, inspired by the everyday command set in
-[Retrodores XVI2](https://github.com/retrodores/XVI/blob/master/readme.txt).
-This is an independent implementation; no XVI2 code is included.
+pvim is for those accounts where Perl is there and Vim isn't. You have a shell,
+files to edit, and no install privileges. Maybe it's cheap shared web hosting.
+Maybe it's a minimal Unix install without gcc, make, or a way to add OS packages.
+I'd still like a capable editor there.
 
-The splash title is **pvim - portable vim clone**. The supported feature set is a
-small vi-style subset. Interactive portability is verified on Linux and macOS;
-native Windows is currently batch/engine-only. BSD, other Unix systems and
-32-bit/vintage machines remain unverified. See [portability evidence](docs/PORTABILITY.md)
-and [Vim differences](https://github.com/oodler577/pvim/wiki/Vim-Differences).
+The goal is a **highly capable, Perl-centric Vim replacement for restricted
+environments**, kept in **one Perl file** and targeting **Perl 5.10+**. Copy it
+into your own account, make it executable, and use it. The standalone file needs
+no root, compiler, build step or CPAN module installation.
+
+The basics are already here: familiar motions and editing modes, search,
+substitution, undo/redo, shell filters, optional perltidy, and disk-backed large
+files. This is still an early release; visual selection, tabs, splits, dot-repeat,
+Vimscript and plugins aren't implemented. Text editing is byte oriented and
+there's no crash recovery yet. See [Vim differences](https://github.com/oodler577/pvim/wiki/Vim-Differences).
+
+Interactive testing covers Linux and macOS. Native Windows currently supports
+the editing engine and batch commands. You need a full Perl standard library,
+a POSIX terminal, writable temporary space and permission to run your own scripts.
+An account limited to CGI execution without a shell won't provide the interactive
+terminal pvim needs. See [portability evidence](docs/PORTABILITY.md).
+
+The everyday command set in [Retrodores XVI2](https://github.com/retrodores/XVI/blob/master/readme.txt)
+helped set the initial scope. No XVI2 code is included. Vim is the behavior
+reference for implemented commands; search and substitution use Perl regexes.
 
 ```sh
 pvim hello.pl
@@ -21,8 +36,8 @@ pvim --help
 pvim --manual
 ```
 
-Install the CPAN-format release tarball with `cpanm`, or copy `pvim` to a
-user-writable directory such as `~/.local/bin` and run `chmod +x ~/.local/bin/pvim`.
+Copy `pvim` to a user-writable directory such as `~/.local/bin` and run
+`chmod +x ~/.local/bin/pvim`, or install the CPAN-format release tarball with `cpanm`.
 The standalone route needs no root, build step, compiler, or CPAN installation.
 The single file is already the standalone distribution: fat-packing adds nothing
 while its only required modules ship with full Perl 5.10+. Minimal distro Perl
@@ -101,8 +116,7 @@ POSIX runners. Tagged releases wait for every required CI job before publishing.
 
 ## Future CPAN distribution: App::Pvim
 
-The project is now packaged as **App::Pvim** for a future CPAN upload; it has not
-been published to CPAN by this work. GitHub releases also provide the tested
+The distribution is **App::Pvim**, prepared for its first CPAN trial release. GitHub releases also provide the tested
 `App-Pvim-VERSION.tar.gz` distribution. You can install that tarball into a
 user-owned prefix with standard Perl build tools; consumers do not need Dist::Zilla.
 
@@ -115,10 +129,10 @@ dzil test
 
 `dist.ini` uses a local author plugin to read the version and runtime from `pvim`,
 then generate `script/pvim` and `lib/App/Pvim.pm`. The module supplies the CPAN
-namespace/version, not a second editor implementation or a library API. All
+namespace and version. Run the `pvim` command to edit files. All
 application code remains in the one standalone file. The CPAN build adds no
 non-core runtime requirements; Perl::Tidy remains optional.
 
-Do not run `dzil release` until a CPAN upload is intentionally authorized and PAUSE
-permissions are verified. Normal CI and GitHub release jobs only build/test the
+Before uploading, review the tarball and confirm the releasing account has the
+right PAUSE permissions. Normal CI and GitHub release jobs only build/test the
 distribution; they never upload to PAUSE. See [CPAN preparation](docs/CPAN.md).
