@@ -63,8 +63,8 @@ adding a job to a workflow alone doesn't establish support.
 
 The suite reports **2,719 Perl tests**; platform/build-specific skips apply.
 The built CPAN distribution additionally executes the generated-module/script
-checks that skip in a raw checkout. Python is used only by author/CI integration
-tests, not by the installed editor.
+checks that skip in a raw checkout. The author/CI tools are Perl too. POSIX terminal tests need IO::Pty on the
+test machine; the installed editor still uses only core modules.
 
 The earliest executed Perl is **5.10.1**, not 5.10.0. Runtime syntax targets 5.10.0,
 but that exact patch release has not been executed. Six representative Perl

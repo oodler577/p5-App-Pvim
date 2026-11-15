@@ -31,11 +31,14 @@ jobs:
           perl -MPod::Checker -e "exit podchecker('pvim')"
           perl tools/wiki.pl --check
           prove -v t
-          python tools/pipe_test.py
+          perl tools/pipe_test.pl
+      - name: Install POSIX author test dependency
+        if: runner.os != 'Windows'
+        run: cpanm --notest Test::More IO::Pty
       - name: POSIX terminal integration
         timeout-minutes: 3
         if: runner.os != 'Windows'
-        run: python3 tools/pty_test.py
+        run: perl tools/pty_test.pl
       - name: Bounded-memory storage benchmark
         if: runner.os == 'Linux' && matrix.perl == '5.10'
         run: /usr/bin/time -v perl tools/benchmark.pl 128
@@ -71,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: perl tools/wiki.pl --check
-      - run: python3 tools/wiki_test.py
+      - run: perl tools/wiki_test.pl
       - run: perl tools/release.pl
       - name: Verify packaged single file away from source
         run: |
@@ -97,12 +100,12 @@ jobs:
       - name: Build and test App::Pvim distribution
         run: |
           # Deliberately seed residues to prove GatherDir excludes them.
-          mkdir -p tools/__pycache__
-          touch CPAN-UNINTENDED.txt tools/audit-residue.log tools/__pycache__/audit.pyc
+          mkdir -p tools/.cache
+          touch CPAN-UNINTENDED.txt tools/audit-residue.log tools/.cache/audit.cache
           dzil build
           version=$(perl pvim --version | cut -d' ' -f2)
-          python3 tools/cpan_audit.py "App-Pvim-${version}"
-          rm CPAN-UNINTENDED.txt tools/audit-residue.log tools/__pycache__/audit.pyc
+          perl tools/cpan_audit.pl "App-Pvim-${version}"
+          rm CPAN-UNINTENDED.txt tools/audit-residue.log tools/.cache/audit.cache
           dzil test
       - name: Verify user-local install from CPAN tarball
         run: |

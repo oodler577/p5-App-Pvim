@@ -98,7 +98,7 @@ histories remain practical limits. Search/format/save are synchronous. Use a
 ```sh
 pvim --batch -c '%s/old/new/g' -c w file.pl
 prove -v t
-python3 tools/pty_test.py
+perl tools/pty_test.pl
 perl tools/benchmark.pl 128
 perl tools/release.pl
 ```

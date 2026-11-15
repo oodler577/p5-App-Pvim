@@ -10,7 +10,7 @@ sub invoke {
     my ($input, @args) = @_;
     # Use real standard descriptors for inheritance on native Windows too.
     # IPC::Open3's pipe EOF behavior differs there; actual pipes are additionally
-    # tested with Python subprocess and with POSIX controlling-terminal PTYs.
+    # tested with an independent Perl pipe harness and POSIX controlling-terminal PTYs.
     open my $data, '+>', "$dir/stdin" or die $!; binmode $data;
     print {$data} $input; seek($data, 0, 0) or die $!;
     open my $output, '+>', "$dir/stdout" or die $!;

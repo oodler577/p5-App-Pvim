@@ -24,7 +24,7 @@ bundle is required.
 
 ```sh
 dzil build
-python3 tools/cpan_audit.py App-Pvim-VERSION
+perl tools/cpan_audit.pl App-Pvim-VERSION
 dzil test
 ```
 
@@ -50,7 +50,7 @@ make install
 At runtime the command requires Perl 5.10+ with its standard library, a POSIX
 terminal for interactive editing, and writable temporary space. Perl::Tidy remains
 an optional formatter. Native Windows supports batch mode; interactive use needs
-a POSIX tty. Python/PTY tests and author tooling are not consumer install-time
+a POSIX tty. PTY tests and author tooling are not consumer install-time
 requirements. The standalone GitHub asset still avoids the build/install step.
 
 ## Future publication checklist
@@ -71,11 +71,12 @@ The CPAN tarball is published as a GitHub asset for review and future use.
 
 `GatherDir` allows the runtime, release/license files, author configuration and
 source subtrees, with explicit cache/backup/build exclusions. CI seeds unwanted
-root, log and bytecode files before building, then audits the actual kit against
+root, log and cache files before building, then audits the actual kit against
 an independent member allowlist and MANIFEST. It checks metadata, Perl licensing,
 core-only runtime prerequisites, identical generated runtime and valid POD in
 both executable copies and App::Pvim. Run the audit on a fresh build before
-MakeMaker creates extra files. Python and Pod::Checker are author checks only.
+MakeMaker creates extra files. The Perl audit uses JSON::PP and Pod::Checker; those are author checks only.
+POSIX terminal tests use IO::Pty. None adds a non-core editor runtime dependency.
 
 The command POD supplies the installed `man pvim`, `--help` and `--manual`:
 installation, options, full supported controls, stdin import, Perl tooling,

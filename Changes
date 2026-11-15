@@ -1,3 +1,10 @@
+0.1.12  2026-11-15
+     - replaced Python PTY, pipe, wiki and CPAN archive tools with Perl equivalents
+     - kept all 22 terminal scenarios, real OS-pipe coverage, wiki publishing guards
+       and archive audits; IO::Pty is a POSIX author-test dependency only
+     - updated CI, author prerequisites and docs; no Python scripts or dependency
+       remain in the repository and editor runtime requirements are unchanged
+
 0.1.11  2026-11-15
      - rewrote POD, App::Pvim's CPAN description, README and wiki around the goal
        of a capable Vim replacement for restricted accounts where Perl exists

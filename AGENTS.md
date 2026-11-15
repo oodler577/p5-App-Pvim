@@ -55,3 +55,7 @@
 - Keep public POD/docs direct and conversational, in the author's voice. Remove
   chat-history phrases such as "user-confirmed" from user-facing documentation;
   retain compatibility decisions in these project instructions.
+
+- Keep repository test, audit and build scripts in Perl; do not add a Python
+  dependency. IO::Pty is a POSIX author-test dependency only, never a runtime
+  or consumer-test requirement. Preserve all terminal and pipe test scenarios.

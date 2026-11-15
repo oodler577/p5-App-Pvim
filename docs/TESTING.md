@@ -9,14 +9,16 @@ render sanitization and optional Perl::Tidy integration. Core-only tests require
 no CPAN downloads. When Perl::Tidy is installed its actual formatting/failure paths
 are tested; otherwise its absence is tested.
 
-`python3 tools/pty_test.py` opens real POSIX pseudo-terminals and drives the actual
+`perl tools/pty_test.pl` opens real POSIX pseudo-terminals and drives the actual
 executable. It tests splash/startup, typing/save, escape decoding, arrows, opening
 lines, bracketed paste (including from the ex prompt), unsaved guards, resize,
 terminal-injection sanitization and terminal restoration/newlines on normal/signal/EOF exit, kernel-verified
 Ctrl-Z/external TSTP suspend/resume with unsaved state, yellow number fields,
 Vim-style shell execution/filter/read behavior and UI restoration.
-Python is a test dependency only. On native Windows run the Perl suite; use WSL
-or a POSIX machine for terminal tests.
+The PTY harness needs IO::Pty (from IO::Tty) on the author/test machine. Install
+it with `cpanm IO::Pty`. It is not an editor or consumer-test dependency. On
+native Windows run `prove t` and `perl tools/pipe_test.pl`; use a POSIX machine
+for terminal tests. All repository test and audit scripts are Perl.
 
 `/usr/bin/time -v perl tools/benchmark.pl 1024` generates a 1 GiB source-like file,
 indexes it, executes 1,000 random jump/edit/undo operations with content assertions,
@@ -61,10 +63,10 @@ Stdin import tests cover byte/line-ending round trips, empty-input protection,
 explicit batch editing, command-looking input as data, no-terminal failures and
 streaming CRLF boundaries. POSIX PTYs attach a controlling terminal separately
 from piped stdin, test automatic and explicit imports, and check terminal restore.
-The CPAN CI job also seeds stray files and runs `tools/cpan_audit.py` on the fresh
+The CPAN CI job also seeds stray files and runs `tools/cpan_audit.pl` on the fresh
 build to verify file gathering, metadata and executable/module POD.
 
-`tools/pipe_test.py` uses real OS pipes with subprocess timeouts on Linux, macOS
+`tools/pipe_test.pl` uses a real stdin pipe with file-backed stdout/stderr capture and an alarm deadline on Linux, macOS
 and native Windows. The Perl suite separately tests redirected stdin with actual
 standard descriptors, avoiding IPC::Open3's native-Windows EOF hang. CI gives the
 core/pipe step five minutes and cancels superseded runs of the same git ref.
@@ -73,5 +75,5 @@ PTY waits drain screen output while polling process exit. Darwin revokes a tty
 when its session leader exits, so those synthetic sessions cannot inspect the
 revoked slave afterward. The real-shell pipeline test compares full tty state
 before launch and after pvim exits, while the shell and terminal remain alive;
-only Darwin's kernel PENDIN state bit is masked. Ordinary PTY sessions retain
+the kernel PENDIN state bit is masked for that probe. Ordinary PTY sessions retain
 exact before/after checks with the same existing PENDIN exception.
