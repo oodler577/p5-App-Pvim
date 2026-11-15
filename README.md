@@ -45,7 +45,7 @@ controls, Perl features and troubleshooting. Wiki sources are maintained in
   line. `:2,10! command` / `:%! command` filter a range / file, and `:r !command`
   inserts output. Buffer edits are undoable; failed commands preserve text.
 - An unnamed startup shows centered splash text that recenters on terminal resize;
-  the community-message copy remains provisional.
+  it includes “Support Us at PerlCommunity.org”.
 
 The embedded POD is the complete command and CLI reference. No tabs, splits,
 visual selection, dot-repeat, full Vim compatibility, or native Windows UI yet.

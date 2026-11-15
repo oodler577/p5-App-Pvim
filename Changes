@@ -1,3 +1,7 @@
+0.1.7  2026-11-14
+     - simplified the centered splash by removing quick-control, environment
+       and provisional donation text; added Support Us at PerlCommunity.org
+
 0.1.6  2026-11-14
      - added -v as a user-confirmed version shortcut alongside --version
      - centered opening splash text horizontally and vertically, with live

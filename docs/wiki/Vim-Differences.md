@@ -27,8 +27,8 @@ Compared with the referenced XVI2 quick help: pvim uses `gg` rather than a lone
 `:e` without a filename reloads the current path; use `:enew` for an unnamed buffer.
 The splash consumes a dismissal key before normal editing begins.
 
-Tabs, visual selection and community/donation splash copy are deferred plans,
-not promises of current behavior. Human feedback will determine the next stage.
+Tabs and visual selection are deferred plans, not promises of current behavior.
+The centered splash includes “Support Us at PerlCommunity.org”. Human feedback will determine the next stage.
 
 ## Behavior policy
 

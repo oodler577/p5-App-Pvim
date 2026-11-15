@@ -800,9 +800,8 @@ sub draw {
 sub splash_frame {
     my ($t) = @_;
     $t->size;
-    my @text = ('pvim 0.1.6 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
-        'i  start editing       :e filename  open a file', ':help  quick controls  pvim --manual  full manual', '',
-        'Perl 5.10+ / core modules / no privileged installation', '', 'Community / donation message: to be supplied.', '', 'Press any key to begin.');
+    my @text = ('pvim 0.1.7 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
+        'Support Us at PerlCommunity.org', '', 'Press any key to begin.');
     # Keep a one-cell margin and center each line and the whole text block.
     # On short terminals remove blank spacers before trimming actual content.
     my $height = $t->{rows}-2;
@@ -835,7 +834,7 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.6';
+our $VERSION = '0.1.7';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash); my @commands;

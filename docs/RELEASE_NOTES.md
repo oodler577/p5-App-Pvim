@@ -1,10 +1,9 @@
-pvim 0.1.6 adds **pvim -v** as a version shortcut (an explicitly confirmed
-exception to Vim's flag semantics), while keeping --version.
+pvim 0.1.7 simplifies the centered opening splash. The quick editing/help lines,
+environment line and provisional community/donation message have been removed.
+The splash now includes:
 
-Opening splash text is centered horizontally and vertically, recenters on terminal
-resize/resume, and fits small terminals by removing spacers and clipping safely.
+**Support Us at PerlCommunity.org**
 
-Help, POD, README, wiki, and CPAN-module documentation now show **pvim** as an
-executable command. Standalone instructions include chmod and direct invocation.
-The single-file runtime, plain-text display, yellow number gutter, shell tools,
-and App::Pvim CPAN packaging remain. No upload to PAUSE is performed.
+The title, short description, centered layout and dismissal prompt remain.
+README and wiki reflect the final support text. The executable, standalone and
+App::Pvim tarball installation routes remain; no upload to PAUSE is performed.
