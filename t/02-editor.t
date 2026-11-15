@@ -52,14 +52,12 @@ for my $cmd ('%s/a/b/e','9s/a/b/','2,1s/a/b/','s/a/b','bogus') { eval {$e->ex($c
 $e=editor('a','b'); sendkeys($e,"i!\e"); eval {$e->ex('q')}; like($@,qr/Unsaved/,'quit guard');
 eval {$e->ex('e absent')}; like($@,qr/Unsaved/,'edit guard'); $e->ex('q!'); ok($e->{quit},'force quit');
 $e=editor('a'); ok(!$e->{number},'numbers are off by default'); $e->ex('set nonumber'); ok(!$e->{number},'hide numbers'); $e->ex('set number'); ok($e->{number},'show numbers');
-$e->ex('set nosyntax'); ok(!$e->{syntax},'disable syntax');
 $e=editor('a'); sendkeys($e,"d\ex"); is_deeply(lines($e),[''],'Escape cancels operator');
 $e=editor('one','two','three','four','five','six','seven'); sendkeys($e,'2d3d'); is_deeply(lines($e),['seven'],'operator counts multiply');
 $e=editor('a'); sendkeys($e,":s/a/b/\r"); is_deeply(lines($e),['b'],'prompt dispatch'); sendkeys($e,":junk\e"); is($e->{mode},'normal','prompt cancel');
 # Render helpers cannot inject file-provided terminal escapes.
 is(PVim::Terminal::safe("\e[31m\xff"),'<1B>[31m<FF>','escape bytes sanitized');
 my ($cells,$positions)=PVim::Terminal::cells("a\tb",8); is($cells,'a       b','tab rendering'); is_deeply($positions,[0,1,8,9],'byte-to-screen mapping');
-my $colored=PVim::Terminal::highlight('my $x = "text"; # hello'); like($colored,qr/\e\[36mmy/,'keyword highlighting'); like($colored,qr/\e\[32m"text"/,'string highlighting');
 $e=editor('a.b','axb'); $e->ex('%s.a\\.b.X.'); is_deeply(lines($e),['X','axb'],'regex metacharacter delimiter stays literal');
 $e=editor('foo'); $e->ex('s&foo&\\&&'); is($e->{b}->line(0),'&','escaped ampersand delimiter literal');
 $e=editor('copied'); sendkeys($e,'yy'); $e->ex('enew!'); sendkeys($e,'p'); is_deeply(lines($e),[''],'new buffer cannot reference old register storage');

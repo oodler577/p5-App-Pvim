@@ -152,7 +152,7 @@ class TerminalTests(unittest.TestCase):
     def test_line_numbers_default_off_and_yellow_three_columns(self):
         with open(self.path, 'wb') as f:
             f.write(b'alpha\nbeta\n')
-        s = self.start('--no-syntax', self.path)
+        s = self.start(self.path)
         self.assertIn(b'\x1b[1;1H\x1b[0malpha', s.output)
         self.assertNotIn(b'\x1b[33m', s.output)
         s.send(b':set number\r')
@@ -167,7 +167,7 @@ class TerminalTests(unittest.TestCase):
     def test_number_field_grows_without_truncation(self):
         with open(self.path, 'wb') as f:
             f.write(b'x\n' * 1000)
-        s = self.start('--no-syntax', self.path)
+        s = self.start(self.path)
         s.send(b':set nu\r')
         self.assertIn(b'\x1b[33m   1\x1b[0m x', s.output)
         s.send(b'G')
@@ -221,6 +221,13 @@ class TerminalTests(unittest.TestCase):
         self.assertEqual(s.proc.wait(timeout=5), 0)
         with open(self.path, 'rb') as f:
             self.assertEqual(f.read(), b'original\nINSERTED\n')
+    def test_perl_source_displays_as_plain_text(self):
+        with open(self.path, 'wb') as f:
+            f.write(b'my $x = "hello"; # comment\n')
+        s = self.start(self.path)
+        self.assertIn(b'\x1b[1;1H\x1b[0mmy $x = "hello"; # comment\x1b[K', s.output)
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5), 0)
     def test_splash_and_write(self):
         s = self.start()
         self.assertIn(b'Perl at the prompt', s.output)

@@ -26,3 +26,7 @@
 - Run dzil build/test and verify a nonprivileged INSTALL_BASE install for packaging
   changes. Author dependencies are not runtime dependencies. Never run dzil release
   or upload to PAUSE without explicit authorization to publish to CPAN.
+
+- Syntax highlighting is deferred by user request. Keep file text plain and do not
+  reintroduce a lexer or make highlighting a release requirement unless requested.
+  The yellow number gutter and status styling are intentional terminal UI features.

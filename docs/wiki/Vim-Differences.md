@@ -14,7 +14,7 @@ Supported controls are fully listed in [Command Reference](Command-Reference).
 | Registers | One internal register, cleared on buffer switches |
 | Repeat/macros | No dot-repeat, macro recording, named registers or mappings |
 | Indentation | No automatic indent, shift operators or text objects |
-| Perl colors | Approximate single-line lexer, not a complete Perl parser |
+| Perl colors | Syntax highlighting deferred; file text is plain |
 | Formatting | Optional whole-buffer Perl::Tidy using `-npro -l=500` |
 | Configuration | CLI/ex toggles; no vimrc or persistent configuration file |
 | Shell integration | `:!` execution, ranged filters, `!!`, and `:r !` output insertion; no filename/history expansion yet |
@@ -56,7 +56,7 @@ reuse of current code. Effort is a design estimate, not a release commitment.
 | Linewise visual `V` | Highlight lines, then yank/delete/filter them | Moderate; best first visual stage |
 | Characterwise visual `v` | Select text across line boundaries | Moderate; needs multi-line character ranges |
 | Dot-repeat `.` | Repeat the last edit | Moderate; record/replay insert sessions and counts correctly |
-| Search-match highlighting | Make results visible while navigating | Moderate; compose with syntax and selection colors |
+| Search-match highlighting | Make results visible while navigating | Moderate; compose with future selection colors |
 | Substitute confirmation `:s/.../.../gc` | Review replacements individually | Moderate; interactive decisions and coherent undo |
 
 I would prioritize character-find motions, indentation/options, word-under-cursor

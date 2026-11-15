@@ -34,8 +34,8 @@ controls, Perl features and troubleshooting. Wiki sources are maintained in
 - Move with `hjkl`, arrows, `w b e`, `0 ^ $`, `gg G`, counts, and paging.
 - Use `dd yy p P`, `x r R`, `o O`, same-line operators, `J`, `u` and Ctrl-R.
 - Search with `/`, `?`, `n`, `N`. `:%s/old/new/g` substitutes across the file.
-- Approximate single-line Perl syntax colors are on by default. Line numbers
-  start off; `:set number` enables a yellow, three-column number field.
+- File text is plain; syntax highlighting is deferred. Line numbers start off;
+  `:set number` enables a yellow, three-column number field.
 - `\t` (backslash then t), `:pt` / `:perltidy` formats with `-l 500` if the optional Perl::Tidy module is
   installed. It ignores tidy profiles, is undoable, and never saves automatically.
 - Ctrl-Z suspends cleanly; `fg` resumes the same buffer and editing mode.

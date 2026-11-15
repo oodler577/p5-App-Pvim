@@ -1,7 +1,7 @@
 # CLI and batch mode
 
 ```text
-perl pvim-standalone.pl [--no-splash] [--no-syntax] [file]
+perl pvim-standalone.pl [--no-splash] [file]
 perl pvim-standalone.pl --help
 perl pvim-standalone.pl --manual
 perl pvim-standalone.pl --version
@@ -14,7 +14,6 @@ perl pvim-standalone.pl --batch -c '%s/old/new/g' -c w file.pl
 | `--manual` | Complete embedded POD, without needing perldoc |
 | `--version` | Editor and Perl versions |
 | `--no-splash` | Suppress unnamed-buffer startup splash |
-| `--no-syntax` | Disable colors at startup |
 | `--batch` | Run ex commands without opening a terminal |
 | `--command`, `-c` | Execute an ex command; repeat as needed |
 | `--` | End options before a filename beginning with `-` |

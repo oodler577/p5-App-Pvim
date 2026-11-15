@@ -4,7 +4,7 @@
 
 | Feature | Current implementation | Limits |
 | --- | --- | --- |
-| Perl syntax colors | Common keywords, scalar/array/hash variables, simple strings, comments, decimal numbers | Approximate single-line lexer; not a complete Perl parser |
+| Syntax highlighting | Deferred; language lexer removed | File text is plain; optional yellow number gutter remains |
 | Perltidy | `\t` (backslash then t), `:pt`, `:perltidy` | Optional Perl::Tidy for the same interpreter; whole-buffer, 8 MiB / 200,000-line cap |
 | Search/substitution | Host Perl regex engine; captures, `&`, `g` and `i` | Not Vim regex syntax; line-oriented replacement; no evaluated replacement |
 | External Perl tools | `:! command` displays results; `:.!`, ranged `!`, `%!` filter text | Tools must already be installed; explicit shell commands can have external effects |
@@ -16,28 +16,15 @@ buffer-aware compiler checker, debugger, test-results panel or project navigatio
 yet. Optional external tools can be invoked, but that is distinct from an integrated
 Perl IDE. The runtime still requires only the full standard Perl library.
 
-## Syntax highlighting
+## Syntax highlighting is deferred
 
-Colors are enabled by default; line numbers are independently **off** by default.
+Syntax highlighting has been removed for now so it does not delay editing or
+releases. File text is rendered plainly, with no language lexer on the display
+path. `:set syntax`, `:set nosyntax` and `--no-syntax` are no longer options.
 
-| Text | ANSI terminal color |
-| --- | --- |
-| Recognized keywords | Cyan |
-| Variables | Yellow |
-| Complete simple single/double-quoted strings | Green |
-| Comments | Gray |
-| Decimal numbers | Magenta |
-| Enabled line numbers | Yellow |
-
-`:set syntax` / `:set nosyntax` toggle text colors. `--no-syntax` starts without
-text colors. These do not disable the yellow gutter enabled by `:set number`.
-The terminal's palette determines the exact appearance; custom themes/color
-configuration and true-color styling are not implemented.
-
-The lexer does not fully handle heredocs, multiline quotes, `q/qq/qw` quoting,
-POD, regex literals, embedded languages or all Perl context-sensitive syntax.
-Horizontal clipping can also lose lexical context. Improving multiline state
-and quote recognition is a useful next step, but is not already implemented.
+The explicitly requested yellow number gutter (`:set number`) and reverse-video
+status line remain as terminal UI styling. Line numbers are off by default.
+Highlighting may be revisited later; it is not a current feature or release blocker.
 
 ## Perltidy
 

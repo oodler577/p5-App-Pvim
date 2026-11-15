@@ -223,7 +223,7 @@ sub save {
 package PVim::Editor;
 sub new {
     my ($class, $store) = @_;
-    return bless { b => $store, row => 0, col => 0, mode => 'normal', number => 0, syntax => 1,
+    return bless { b => $store, row => 0, col => 0, mode => 'normal', number => 0,
         tabstop => 8, message => '', pending => '', count => '', register => [], page => 20 }, $class;
 }
 sub clamp {
@@ -505,8 +505,8 @@ sub ex {
         die "Unsaved changes; use :enew!\n" if $e->{b}->dirty && !$1;
         $e->{b} = PVim::Store->load(undef); ($e->{row},$e->{col}) = (0,0); $e->{register} = []; delete $e->{regtext};
     }
-    elsif ($command =~ /^set\s+(nu|number|nonu|nonumber|syntax|nosyntax)$/) {
-        my $opt = $1; $e->{$opt =~ /syntax/ ? 'syntax' : 'number'} = $opt =~ /^no/ ? 0 : 1;
+    elsif ($command =~ /^set\s+(nu|number|nonu|nonumber)$/) {
+        my $opt = $1; $e->{number} = $opt =~ /^no/ ? 0 : 1;
     }
     elsif ($command eq 'pt' || $command eq 'perltidy') { $e->tidy }
     elsif ($command eq 'u' || $command eq 'undo') { $e->undo(0) }
@@ -764,20 +764,6 @@ sub display {
     }
     return defined($limit) ? substr($out,0,$limit) : $out;
 }
-sub highlight {
-    my ($text) = @_;
-    # Bounded, single-line lexer. Deliberately no code execution or full Perl parser.
-    my $out = '';
-    while (length $text) {
-        if ($text =~ s/^(#.*)//) { $out .= "\e[90m$1\e[0m" }
-        elsif ($text =~ s/^("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')//) { $out .= "\e[32m$1\e[0m" }
-        elsif ($text =~ s/^(\b(?:my|our|local|sub|use|require|if|else|elsif|unless|while|for|foreach|return|package|print|say|die|warn|eval|BEGIN|END|do|last|next|given|when|state)\b)//) { $out .= "\e[36m$1\e[0m" }
-        elsif ($text =~ s/^([\$\@%][A-Za-z_][A-Za-z_0-9:]*)//) { $out .= "\e[33m$1\e[0m" }
-        elsif ($text =~ s/^(\b\d+(?:\.\d+)?\b)//) { $out .= "\e[35m$1\e[0m" }
-        else { $out .= substr($text,0,1,'') }
-    }
-    return $out;
-}
 sub draw {
     my ($t,$e) = @_;
     $t->size; my ($rows,$cols) = @{$t}{qw(rows cols)}; my $height = $rows-2; $e->{page} = $height;
@@ -794,7 +780,6 @@ sub draw {
         my $r = $t->{top}+$screen_row;
         if ($r >= $b->{count}) { push @screen,'~'; next }
         my $text = display($b->line($r),$e->{tabstop},$t->{left}+$width); $text = substr($text,$t->{left},$width);
-        $text = highlight($text) if $e->{syntax};
         my $prefix = $gutter ? sprintf("\e[33m%*d\e[0m ", $gutter-1,$r+1) : '';
         push @screen, $prefix.$text;
     }
@@ -815,7 +800,7 @@ sub draw {
 sub splash_frame {
     my ($t) = @_;
     $t->size;
-    my @text = ('pvim 0.1.4 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
+    my @text = ('pvim 0.1.5 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
         'i  start editing       :e filename  open a file', ':help  quick controls  pvim --manual  full manual', '',
         'Perl 5.10+ / core modules / no privileged installation', '', 'Community / donation message: to be supplied.', '', 'Press any key to begin.');
     print "\e[2J\e[H";
@@ -836,18 +821,18 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.4';
+our $VERSION = '0.1.5';
 sub run {
     my (@args) = @_;
-    my ($help,$manual,$version,$batch,$no_splash,$no_syntax); my @commands;
+    my ($help,$manual,$version,$batch,$no_splash); my @commands;
     Getopt::Long::Configure('no_auto_abbrev','no_ignore_case');
     GetOptionsFromArray(\@args,'help|h'=>\$help,'manual'=>\$manual,'version'=>\$version,'batch'=>\$batch,
-        'no-splash'=>\$no_splash,'no-syntax'=>\$no_syntax,'command|c=s@'=>\@commands) or return 2;
+        'no-splash'=>\$no_splash,'command|c=s@'=>\@commands) or return 2;
     if ($help) { Pod::Usage::pod2usage(-exitval=>'NOEXIT',-verbose=>0); return 0 }
     if ($manual) { Pod::Usage::pod2usage(-exitval=>'NOEXIT',-verbose=>2,-noperldoc=>1); return 0 }
     if ($version) { print "pvim $VERSION (Perl $])\n"; return 0 }
     die "One file at a time; tabs are planned\n" if @args > 1;
-    my $e = PVim::Editor->new(PVim::Store->load($args[0])); $e->{syntax} = 0 if $no_syntax;
+    my $e = PVim::Editor->new(PVim::Store->load($args[0]));
     for my $cmd (@commands) { $e->ex($cmd); last if $e->{quit} }
     return 0 if $batch || $e->{quit};
     my $t = PVim::Terminal->new;
@@ -899,7 +884,7 @@ pvim - a portable, Perl-centric vi-style terminal editor
 
 =head1 SYNOPSIS
 
-  perl pvim [--no-splash] [--no-syntax] [file]
+  perl pvim [--no-splash] [file]
   perl pvim --help
   perl pvim --manual
   perl pvim --version
@@ -937,9 +922,9 @@ Execute an ex command. Repeat for multiple commands. Quote shell metacharacters.
 Paths passed inside ex commands are literal, including spaces; no shell expansion
 or command execution is performed. Use C<--> before filenames beginning with C<->.
 
-=item B<--no-splash>, B<--no-syntax>
+=item B<--no-splash>
 
-Suppress the initial unnamed-buffer splash or disable syntax colors.
+Suppress the initial unnamed-buffer splash.
 
 =back
 
@@ -987,7 +972,6 @@ leaves trailing whitespace, as in Vim. Registers clear when opening a new buffer
   :e [file]            open or reload; :e! discards unsaved changes
   :enew / :enew!       new unnamed buffer, with unsaved guard / discard
   :set number          show yellow line numbers; :set nonumber hides (default)
-  :set syntax          enable basic Perl colors; :set nosyntax disables
   :undo / :redo        undo / redo
   :123                 go to line 123; :$ goes to last line
   :s/foo/bar/          replace first occurrence on current line
@@ -1017,12 +1001,10 @@ Perl::Tidy materializes the whole source. Failure leaves the buffer unchanged.
 
 =head1 PERL FEATURES
 
-Perl highlighting is an approximate single-line lexer for common keywords,
-variables, simple quoted strings, comments and numbers. C<:set syntax> and
-C<:set nosyntax> toggle it. It does not fully parse Perl: heredocs, multiline
-quotes, POD, regex literals and embedded languages need more work. Horizontal
-clipping can lose lexical context. There is no language server, completion,
-buffer-aware C<perl -c> command, debugger or integrated test runner yet.
+Syntax highlighting is deferred. File text is displayed without language colors.
+The optional yellow line-number gutter and terminal status styling remain.
+There is no language server, completion, buffer-aware C<perl -c> command,
+debugger or integrated test runner yet.
 
 C<\t> (backslash then t), C<:pt> and C<:perltidy> invoke optional Perl::Tidy.
 Search and substitution use Perl regexes. Batch commands expose the same editor
@@ -1096,9 +1078,8 @@ there is no compaction yet. Use a 64-bit Perl for files beyond 2 GiB.
 
 The editor is byte oriented. Printable ASCII and tabs display normally; other
 bytes display as C<< <HH> >>, preserving their bytes. It does not provide Unicode
-character/grapheme editing. Perl highlighting is an approximate single-line
-lexer; heredocs, multiline quoting, POD, regex literals and embedded languages
-are not parsed. Long lines pan horizontally; they do not wrap.
+character/grapheme editing. No language lexer runs during display.
+Long lines pan horizontally; they do not wrap.
 
 Untouched LF/CRLF line endings, mixed endings, and a missing final newline survive
 round trips. New lines use the first observed newline style. A new unnamed/file
@@ -1120,8 +1101,8 @@ the same path. Bracketed-paste control bytes do not trigger suspension.
 
 Line numbers are off by default. C<:set number> uses a right-aligned three-column
 number field in ANSI yellow, followed by one separating space. The field widens
-for four or more digits without truncating numbers. C<:set nosyntax> disables Perl
-text highlighting independently of the yellow number gutter.
+for four or more digits without truncating numbers. The number color is terminal
+UI styling, independent of the deferred syntax-highlighting feature.
 
 Ctrl-C is a normal input byte in raw mode; use Escape then C<:q> to quit. Terminal
 resize is handled at the next keypress. Native Windows interactive UI is pending.

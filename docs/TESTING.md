@@ -45,7 +45,7 @@ Use disposable copies of real Perl sources for initial testing.
 7. Save/reopen LF, CRLF, mixed-newline and no-final-newline files; compare externally.
 8. Edit the source externally and check the write guard. Check `:q` vs `:q!`.
 9. Paste a multiline Perl snippet; resize the terminal; use Ctrl-L to redraw.
-10. Check colors on comments, strings and variables; assess the documented lexer limits.
+10. Check plain Perl text display and the optional yellow line-number gutter.
 11. With Perl::Tidy installed, use `:pt`, undo it, and check diagnostics on broken Perl.
 12. Suspend/resume in insert and prompt modes with Ctrl-Z and `fg`; check preserved
     text and tty state. Test `:!` display, `:.!`/ranged filtering, and `:r !` insertion.
@@ -54,5 +54,4 @@ Use disposable copies of real Perl sources for initial testing.
 14. Quit normally and confirm shell echo, Ctrl-C, and screen state return to normal.
 
 Record OS, `perl -V`, terminal emulator, locale, file size/line count/longest line,
-exact keys, expected/actual text, and whether reproducing with `--no-syntax` changes
-behavior. Report data-loss or terminal-restoration defects before cosmetic issues.
+exact keys, expected/actual text, and a minimal reproducing sample. Report data-loss or terminal-restoration defects before cosmetic issues.

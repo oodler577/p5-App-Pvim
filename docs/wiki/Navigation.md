@@ -26,12 +26,12 @@ Long lines pan horizontally instead of wrapping. Numbers are **off by default**.
 in yellow, followed by one separator space. For example, line 1 has two leading
 spaces, the yellow digit `1`, then a space before text. Four-digit and longer
 numbers widen the field instead of being clipped. `:set nonumber` (or `:set nonu`)
-hides it again. Disabling Perl syntax colors does not disable yellow line numbers.
+hides it again. The yellow gutter is terminal UI styling; syntax highlighting is deferred.
 
 Terminal dimensions are read on the next keypress after a resize. Linux and
 macOS/BSD-style terminal-size ioctls are implemented; other POSIX systems fall
 back to `LINES`/`COLUMNS`, then 24x80. Linux and macOS have PTY tests; real BSD
 interactive coverage is still pending.
 
-Perl syntax colors are on by default. `:set nosyntax` disables them; `:set syntax`
-restores them. See [Perl Features](Perl-Features).
+Syntax highlighting is deferred; file text is plain. Yellow line numbers and the
+status line remain available as terminal UI styling. See [Perl Features](Perl-Features).

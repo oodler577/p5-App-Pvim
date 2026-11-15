@@ -1,3 +1,8 @@
+0.1.5  2026-11-14
+     - removed syntax highlighting and its display-path lexer for now
+     - removed syntax toggles/options; retained yellow line numbers and status styling
+     - updated POD, wiki and tests to make highlighting explicitly deferred
+
 0.1.4  2026-11-14
      - prepared the App::Pvim CPAN distribution with dist.ini and an author
        build plugin generating the metadata module and installed script from
