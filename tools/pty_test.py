@@ -20,6 +20,19 @@ import unittest
 PERL = os.environ.get('PVIM_PERL', 'perl')
 SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pvim'))
 
+class PtyProcess(subprocess.Popen):
+    def wait(self, timeout=None):
+        # Drain output while waiting: Darwin tty teardown can wait for queued
+        # output. Polling also avoids depending on Python's platform wait backend.
+        if not hasattr(self, 'drain_output'):
+            return super().wait(timeout=timeout)
+        until = time.monotonic() + (timeout if timeout is not None else 30)
+        while self.poll() is None:
+            if time.monotonic() >= until:
+                raise subprocess.TimeoutExpired(self.args, timeout)
+            self.drain_output(0.01)
+        return self.returncode
+
 class Session:
     def __init__(self, *args, rows=24, cols=80, piped=None, shell=False, controlling=True):
         self.master, self.slave = pty.openpty()
@@ -33,7 +46,8 @@ class Session:
             os.tcsetpgrp(self.slave, os.getpgrp())
             signal.signal(signal.SIGTTOU, old)
         command = ['/bin/sh', '-i'] if shell else [PERL, SCRIPT, *args]
-        self.proc = subprocess.Popen(command,
+        self.owns_session = shell or (piped is not None and controlling)
+        self.proc = PtyProcess(command,
             stdin=self.slave if piped is None else subprocess.PIPE,
             stdout=self.slave, stderr=self.slave,
             preexec_fn=(controlling_terminal if controlling else os.setsid)
@@ -42,6 +56,7 @@ class Session:
             self.proc.stdin.write(piped)
             self.proc.stdin.close()
         self.output = b''
+        self.proc.drain_output = self.drain
         self.drain(0.25)
     def drain(self, seconds=0.10):
         until = time.monotonic() + seconds
@@ -84,7 +99,17 @@ class Session:
             self.proc.kill()
             self.proc.wait(timeout=5)
         self.drain(0.01)
-        after = termios.tcgetattr(self.slave)
+        try:
+            after = termios.tcgetattr(self.slave)
+        except termios.error as err:
+            # Darwin revokes a controlling tty when its session leader exits.
+            # Ordinary editor sessions retain exact attribute checks; owned
+            # sessions must have emitted the terminal-restoration sequence.
+            if sys.platform != 'darwin' or not self.owns_session or err.args[0] != errno.ENOTTY:
+                raise
+            os.close(self.master)
+            os.close(self.slave)
+            return b'\x1b[?2004l' in self.output
         # Darwin sets PENDIN when ICANON is restored, even with identical settings.
         # Kernel state, not a configuration leak: xnu/bsd/kern/tty.c TIOCSETA.
         before = list(self.before)
