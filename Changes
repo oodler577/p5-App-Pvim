@@ -1,6 +1,8 @@
 0.1.10  2026-11-15
      - replaced the hanging native-Windows IPC::Open3 test harness with real
        descriptor redirection and independent subprocess pipe integration tests
+     - made PTY waits drain output and account for Darwin session revocation;
+       verified pipeline tty restoration from a surviving shell
      - bounded CI steps and cancel superseded runs to catch future test stalls
 
 0.1.9  2026-11-15 (unreleased CI candidate)

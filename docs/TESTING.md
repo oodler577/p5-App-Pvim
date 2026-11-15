@@ -68,3 +68,10 @@ build to verify file gathering, metadata and executable/module POD.
 and native Windows. The Perl suite separately tests redirected stdin with actual
 standard descriptors, avoiding IPC::Open3's native-Windows EOF hang. CI gives the
 core/pipe step five minutes and cancels superseded runs of the same git ref.
+
+PTY waits drain screen output while polling process exit. Darwin revokes a tty
+when its session leader exits, so those synthetic sessions cannot inspect the
+revoked slave afterward. The real-shell pipeline test compares full tty state
+before launch and after pvim exits, while the shell and terminal remain alive;
+only Darwin's kernel PENDIN state bit is masked. Ordinary PTY sessions retain
+exact before/after checks with the same existing PENDIN exception.

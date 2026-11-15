@@ -13,6 +13,10 @@ redirected screen output fails clearly. Input is read until EOF, so an endless
 producer prevents editing from starting. Automatic no-filename detection is a
 confirmed exception to Vim's explicit `-`; batch still requires explicit `-`.
 
+Native-Windows pipe tests use an independent subprocess harness; POSIX tests
+cover shell-pipeline suspension/resume and terminal restoration, with Darwin
+session teardown handled explicitly. CI checks have bounded execution times.
+
 CPAN preparation now restricts gathered files and audits the built manifest,
 metadata and POD. The maintained runtime remains one file with core-only
 requirements. No upload to CPAN/PAUSE is performed.

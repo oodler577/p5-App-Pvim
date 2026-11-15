@@ -173,6 +173,12 @@ class TerminalTests(unittest.TestCase):
         self.assertNotIn(b'\x1b[?1049h', self.s.output)
     def test_pipeline_suspend_and_fg_in_real_shell(self):
         s = self.start(shell=True)
+        probe = shlex.quote(sys.executable) + ' -c ' + shlex.quote(
+            'import termios; a=termios.tcgetattr(0); '
+            'a[3] &= ~getattr(termios,"PENDIN",0); print(repr(a))')
+        before = self.path + '.tty-before'
+        after = self.path + '.tty-after'
+        s.send((probe + ' > ' + shlex.quote(before) + '\r').encode())
         command = "printf 'pipeline text\\n' | " + shlex.quote(PERL) + ' ' + shlex.quote(SCRIPT)
         s.send(command.encode() + b'\r')
         s.drain(0.3)
@@ -185,6 +191,9 @@ class TerminalTests(unittest.TestCase):
         s.drain(0.3)
         s.send((':w ' + self.path + '\r').encode())
         s.send(b':q\r')
+        s.send((probe + ' > ' + shlex.quote(after) + '\r').encode())
+        with open(before) as a, open(after) as b:
+            self.assertEqual(a.read(), b.read(), 'pipeline restored tty before shell resumed')
         s.send(b'exit\r')
         self.assertEqual(s.proc.wait(timeout=5), 0)
         with open(self.path, 'rb') as f:
