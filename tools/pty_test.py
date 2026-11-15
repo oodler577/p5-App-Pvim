@@ -2,6 +2,7 @@
 """Real PTY tests: input decoding, file safety, redraw, signals and tty restore."""
 import errno
 import fcntl
+import faulthandler
 import os
 import pty
 import re
@@ -22,11 +23,15 @@ SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pvim'))
 class Session:
     def __init__(self, *args, rows=24, cols=80, piped=None, shell=False, controlling=True):
         self.master, self.slave = pty.openpty()
+        os.set_blocking(self.master, False)
         self.before = termios.tcgetattr(self.slave)
         fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack('HHHH', rows, cols, 0, 0))
         def controlling_terminal():
             os.setsid()
+            old = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
             fcntl.ioctl(self.slave, termios.TIOCSCTTY, 0)
+            os.tcsetpgrp(self.slave, os.getpgrp())
+            signal.signal(signal.SIGTTOU, old)
         command = ['/bin/sh', '-i'] if shell else [PERL, SCRIPT, *args]
         self.proc = subprocess.Popen(command,
             stdin=self.slave if piped is None else subprocess.PIPE,
@@ -48,7 +53,7 @@ class Session:
                         break
                     self.output += chunk
                 except OSError as err:
-                    if err.errno == errno.EIO:
+                    if err.errno in (errno.EIO, errno.EAGAIN, errno.EWOULDBLOCK):
                         break
                     raise
         return self.output
@@ -77,7 +82,7 @@ class Session:
             self.proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             self.proc.kill()
-            self.proc.wait()
+            self.proc.wait(timeout=5)
         self.drain(0.01)
         after = termios.tcgetattr(self.slave)
         # Darwin sets PENDIN when ICANON is restored, even with identical settings.
@@ -96,6 +101,7 @@ class Session:
 
 class TerminalTests(unittest.TestCase):
     def setUp(self):
+        faulthandler.dump_traceback_later(45, exit=True)
         self.tmp = tempfile.TemporaryDirectory()
         self.path = os.path.join(self.tmp.name, 'sample.pl')
         self.s = None
@@ -103,6 +109,7 @@ class TerminalTests(unittest.TestCase):
         if self.s:
             self.assertTrue(self.s.close(), 'terminal attributes restored')
         self.tmp.cleanup()
+        faulthandler.cancel_dump_traceback_later()
     def start(self, *args, **kwargs):
         self.s = Session(*args, **kwargs)
         self.assertIsNone(self.s.proc.poll(), self.s.output.decode(errors='replace'))
@@ -160,6 +167,7 @@ class TerminalTests(unittest.TestCase):
 
     def test_empty_pipe_and_terminal_restore_on_signal(self):
         s = self.start(piped=b'')
+        self.assertIn(b'\x1b[?1049h', s.output, 'editor entered terminal mode')
         s.send(b':q\r')
         self.assertIsNone(s.proc.poll())
         s.proc.terminate()
