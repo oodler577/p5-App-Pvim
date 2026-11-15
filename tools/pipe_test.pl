@@ -30,11 +30,11 @@ sub invoke {
             if ($^O eq 'MSWin32' && $] < 5.022) {
                 # Old Windows Perls have only string-form pipe opens. Keep the
                 # real argv in a helper so cmd.exe never parses ex commands or
-                # destination paths. The helper execs the same Perl and editor.
+                # destination paths. The helper waits for the same Perl and editor.
                 my $helper="$dir/pipe-child.pl";
                 open my $child,'>',$helper or die $!;
                 my $argv=Data::Dumper->new([[$perl,$script,@args]])->Terse(1)->Dump;
-                print {$child} 'my @cmd=@{'.$argv.'}; exec {$cmd[0]} @cmd; die "Exec: $!\n";';
+                print {$child} 'my @cmd=@{'.$argv.'}; my $status=system {$cmd[0]} @cmd; exit($status == -1 ? 127 : ($status >> 8));';
                 close $child or die $!;
                 my $command=qq{"$perl" "$helper"};
                 open $pipe,'|-',$command or die "Start editor: $!\n";
