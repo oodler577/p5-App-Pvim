@@ -1,4 +1,4 @@
-pvim 0.1.12 replaces the four Python test/audit scripts with Perl equivalents:
+pvim 0.1.13 replaces the four Python test/audit scripts with Perl equivalents:
 
 - `tools/pty_test.pl`: the same 22 real-terminal scenarios, including suspend/fg,
   stdin import, shell commands, colors, paste, resizing and terminal restoration.

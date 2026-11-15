@@ -1,4 +1,8 @@
-0.1.12  2026-11-15
+0.1.13  2026-11-15
+     - kept real-pipe coverage on old native Windows Perls using a Perl argv
+       helper where list-form pipe opens are unavailable
+
+0.1.12  2026-11-15 (unreleased CI candidate)
      - replaced Python PTY, pipe, wiki and CPAN archive tools with Perl equivalents
      - kept all 22 terminal scenarios, real OS-pipe coverage, wiki publishing guards
        and archive audits; IO::Pty is a POSIX author-test dependency only

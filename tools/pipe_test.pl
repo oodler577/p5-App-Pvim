@@ -5,6 +5,7 @@ use warnings;
 use Test::More;
 use File::Temp qw(tempdir);
 use FindBin;
+use Data::Dumper ();
 my $perl=$ENV{PVIM_PERL} || $^X;
 my $script="$FindBin::Bin/../pvim";
 my $dir=tempdir('pvim pipe XXXXX',TMPDIR=>1,CLEANUP=>1);
@@ -25,7 +26,22 @@ sub invoke {
             alarm 30;
             # One real stdin pipe; output goes to files, so no output pipe can
             # fill while the parent writes. This also avoids Open3's Win32 EOF issue.
-            open my $pipe,'|-',$perl,$script,@args or die "Start editor: $!\n";
+            my $pipe;
+            if ($^O eq 'MSWin32' && $] < 5.022) {
+                # Old Windows Perls have only string-form pipe opens. Keep the
+                # real argv in a helper so cmd.exe never parses ex commands or
+                # destination paths. The helper execs the same Perl and editor.
+                my $helper="$dir/pipe-child.pl";
+                open my $child,'>',$helper or die $!;
+                my $argv=Data::Dumper->new([[$perl,$script,@args]])->Terse(1)->Dump;
+                print {$child} 'my @cmd=@{'.$argv.'}; exec {$cmd[0]} @cmd; die "Exec: $!\n";';
+                close $child or die $!;
+                my $command=qq{"$perl" "$helper"};
+                open $pipe,'|-',$command or die "Start editor: $!\n";
+            } else {
+                open $pipe,'|-',$perl,$script,@args or die "Start editor: $!\n";
+            }
+
             binmode $pipe;
             print {$pipe} $input;
             close $pipe; $status=$?;
