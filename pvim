@@ -838,7 +838,7 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.9';
+our $VERSION = '0.1.10';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash); my @commands;

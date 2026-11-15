@@ -4,18 +4,31 @@ use warnings;
 use Test::More;
 use File::Temp qw(tempdir);
 use FindBin;
-use IPC::Open3;
-use Symbol qw(gensym);
 require "$FindBin::Bin/../pvim";
 my $dir = tempdir(CLEANUP => 1);
 sub invoke {
     my ($input, @args) = @_;
-    my $err = gensym;
-    my $pid = open3(my $in, my $out, $err, $^X, "$FindBin::Bin/../pvim", @args);
-    binmode $in; print {$in} $input; close $in;
-    local $/; my $stdout = <$out>; my $stderr = <$err>;
-    waitpid($pid, 0);
-    return ($?, $stdout, $stderr);
+    # Use real standard descriptors for inheritance on native Windows too.
+    # IPC::Open3's pipe EOF behavior differs there; actual pipes are additionally
+    # tested with Python subprocess and with POSIX controlling-terminal PTYs.
+    open my $data, '+>', "$dir/stdin" or die $!; binmode $data;
+    print {$data} $input; seek($data, 0, 0) or die $!;
+    open my $output, '+>', "$dir/stdout" or die $!;
+    open my $errors, '+>', "$dir/stderr" or die $!;
+    my ($saved_in, $saved_out, $saved_err);
+    open $saved_in, '<&', \*STDIN or die $!;
+    open $saved_out, '>&', \*STDOUT or die $!;
+    open $saved_err, '>&', \*STDERR or die $!;
+    open STDIN, '<&', $data or die $!;
+    open STDOUT, '>&', $output or die $!;
+    open STDERR, '>&', $errors or die $!;
+    my $status = system($^X, "$FindBin::Bin/../pvim", @args);
+    open STDIN, '<&', $saved_in or die $!;
+    open STDOUT, '>&', $saved_out or die $!;
+    open STDERR, '>&', $saved_err or die $!;
+    seek($output, 0, 0) or die $!; seek($errors, 0, 0) or die $!;
+    local $/; my $stdout = <$output>; my $stderr = <$errors>;
+    return ($status, $stdout, $stderr);
 }
 my $file = "$dir/import.txt";
 for my $text ("hi\n", "one\r\ntwo\nlast", '', ":q!\n\x1b:w danger\n", "a\0b\n") {

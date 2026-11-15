@@ -1,4 +1,4 @@
-pvim 0.1.9 adds stdin import:
+pvim 0.1.10 adds stdin import:
 
 ```sh
 printf 'hi\n' | pvim

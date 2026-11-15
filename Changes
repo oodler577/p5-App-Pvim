@@ -1,4 +1,9 @@
-0.1.9  2026-11-15
+0.1.10  2026-11-15
+     - replaced the hanging native-Windows IPC::Open3 test harness with real
+       descriptor redirection and independent subprocess pipe integration tests
+     - bounded CI steps and cancel superseded runs to catch future test stalls
+
+0.1.9  2026-11-15 (unreleased CI candidate)
      - added streaming stdin import via pvim - and user-confirmed automatic
        detection for interactive piped/redirected input without a filename
      - read keystrokes from the controlling terminal, mark imports unnamed and

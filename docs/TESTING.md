@@ -63,3 +63,8 @@ streaming CRLF boundaries. POSIX PTYs attach a controlling terminal separately
 from piped stdin, test automatic and explicit imports, and check terminal restore.
 The CPAN CI job also seeds stray files and runs `tools/cpan_audit.py` on the fresh
 build to verify file gathering, metadata and executable/module POD.
+
+`tools/pipe_test.py` uses real OS pipes with subprocess timeouts on Linux, macOS
+and native Windows. The Perl suite separately tests redirected stdin with actual
+standard descriptors, avoiding IPC::Open3's native-Windows EOF hang. CI gives the
+core/pipe step five minutes and cancels superseded runs of the same git ref.

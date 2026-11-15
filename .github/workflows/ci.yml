@@ -5,6 +5,9 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: pvim-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -22,11 +25,13 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: Syntax, POD and complete core-only suite
+        timeout-minutes: 5
         run: |
           perl -c pvim
           perl -MPod::Checker -e "exit podchecker('pvim')"
           perl tools/wiki.pl --check
           prove -v t
+          python tools/pipe_test.py
       - name: POSIX terminal integration
         if: runner.os != 'Windows'
         run: python3 tools/pty_test.py
