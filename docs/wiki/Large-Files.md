@@ -19,7 +19,7 @@ full output file in the destination directory. Scratch and destination may be on
 different filesystems. Configure a writable scratch disk before startup:
 
 ```sh
-TMPDIR=/path/to/large/scratch perl pvim-standalone.pl large.log
+TMPDIR=/path/to/large/scratch pvim large.log
 ```
 
 ## Measured behavior

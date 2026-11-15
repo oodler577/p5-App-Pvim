@@ -74,6 +74,7 @@ jobs:
           cmp pvim pvim-standalone.pl
           cp pvim-standalone.pl "$RUNNER_TEMP/pvim-standalone.pl"
           cd "$RUNNER_TEMP"
+          ./pvim-standalone.pl -v
           perl pvim-standalone.pl --version
           perl pvim-standalone.pl --help
           printf 'old old\n' > standalone.pl
@@ -100,7 +101,7 @@ jobs:
           perl Makefile.PL INSTALL_BASE="$RUNNER_TEMP/pvim-cpan-install"
           make test
           make install
-          "$RUNNER_TEMP/pvim-cpan-install/bin/pvim" --version
+          "$RUNNER_TEMP/pvim-cpan-install/bin/pvim" -v
           PERL5LIB="$RUNNER_TEMP/pvim-cpan-install/lib/perl5" perl -MApp::Pvim -e 'print "$App::Pvim::VERSION\n"'
       - uses: actions/upload-artifact@v4
         with:

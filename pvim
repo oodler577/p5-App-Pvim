@@ -800,11 +800,25 @@ sub draw {
 sub splash_frame {
     my ($t) = @_;
     $t->size;
-    my @text = ('pvim 0.1.5 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
+    my @text = ('pvim 0.1.6 - Perl at the prompt', '', 'A small, portable, Perl-centric vi-style editor.', '',
         'i  start editing       :e filename  open a file', ':help  quick controls  pvim --manual  full manual', '',
         'Perl 5.10+ / core modules / no privileged installation', '', 'Community / donation message: to be supplied.', '', 'Press any key to begin.');
+    # Keep a one-cell margin and center each line and the whole text block.
+    # On short terminals remove blank spacers before trimming actual content.
+    my $height = $t->{rows}-2;
+    while (@text > $height) {
+        my ($blank) = grep { $text[$_] eq '' } 0..$#text;
+        last unless defined $blank;
+        splice @text,$blank,1;
+    }
+    @text = (@text[0..$height-2],$text[-1]) if @text > $height;
+    my $top = int(($t->{rows}-@text)/2)+1;
     print "\e[2J\e[H";
-    for my $i (0..$#text) { last if $i >= $t->{rows}-1; print sprintf("\e[%d;3H%s",$i+2,substr(safe($text[$i]),0,$t->{cols}-4)) }
+    for my $i (0..$#text) {
+        my $line = substr(safe($text[$i]),0,$t->{cols}-2);
+        my $left = int(($t->{cols}-length($line))/2)+1;
+        print sprintf("\e[%d;%dH%s",$top+$i,$left,$line);
+    }
 }
 sub splash {
     my ($t) = @_;
@@ -821,12 +835,12 @@ sub splash {
 package main;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-our $VERSION = '0.1.5';
+our $VERSION = '0.1.6';
 sub run {
     my (@args) = @_;
     my ($help,$manual,$version,$batch,$no_splash); my @commands;
     Getopt::Long::Configure('no_auto_abbrev','no_ignore_case');
-    GetOptionsFromArray(\@args,'help|h'=>\$help,'manual'=>\$manual,'version'=>\$version,'batch'=>\$batch,
+    GetOptionsFromArray(\@args,'help|h'=>\$help,'manual'=>\$manual,'version|v'=>\$version,'batch'=>\$batch,
         'no-splash'=>\$no_splash,'command|c=s@'=>\@commands) or return 2;
     if ($help) { Pod::Usage::pod2usage(-exitval=>'NOEXIT',-verbose=>0); return 0 }
     if ($manual) { Pod::Usage::pod2usage(-exitval=>'NOEXIT',-verbose=>2,-noperldoc=>1); return 0 }
@@ -839,7 +853,10 @@ sub run {
     local $SIG{TERM} = sub { die "Terminated; unsaved changes were not written\n" };
     local $SIG{HUP} = sub { die "Terminal disconnected; unsaved changes were not written\n" };
     local $SIG{INT} = sub { die "Interrupted; unsaved changes were not written\n" };
-    local $SIG{WINCH} = sub { $e->{redraw} = 1 };
+    local $SIG{WINCH} = sub {
+        $e->{redraw} = 1;
+        $t->splash_frame if $t->{in_splash} && $t->{old};
+    };
     $e->{before_filter} = sub { $t->stop };
     $e->{shell_wait} = sub {
         print "\nPress ENTER to return to pvim: ";
@@ -884,11 +901,12 @@ pvim - a portable, Perl-centric vi-style terminal editor
 
 =head1 SYNOPSIS
 
-  perl pvim [--no-splash] [file]
-  perl pvim --help
-  perl pvim --manual
-  perl pvim --version
-  perl pvim --batch -c '%s/old/new/g' -c w file
+  pvim [--no-splash] [file]
+  pvim --help
+  pvim --manual
+  pvim -v
+  pvim --version
+  pvim --batch -c '%s/old/new/g' -c w file
 
 =head1 DESCRIPTION
 
@@ -906,9 +924,10 @@ Native Windows supports batch commands and engine tests; use WSL for the UI.
 
 Print usage. B<--manual> prints this full manual without requiring perldoc.
 
-=item B<--version>
+=item B<--version>, B<-v>
 
-Print editor and interpreter versions.
+Print editor and interpreter versions. C<-v> is a user-confirmed pvim shortcut;
+Vim reserves that flag for Vi mode and uses C<--version> for version output.
 
 =item B<--batch>
 
@@ -924,7 +943,8 @@ or command execution is performed. Use C<--> before filenames beginning with C<-
 
 =item B<--no-splash>
 
-Suppress the initial unnamed-buffer splash.
+Suppress the initial unnamed-buffer splash. Opening splash text is centered
+horizontally and vertically, and recenters when the terminal is resized.
 
 =back
 
@@ -1109,10 +1129,12 @@ resize is handled at the next keypress. Native Windows interactive UI is pending
 
 =head1 INSTALLATION
 
-Copy this one file to any user-writable directory. Run C<perl /path/to/pvim>.
-On POSIX, C<chmod +x pvim> permits direct execution using the Perl in PATH.
-No root, compiler, make, module installation, or separate fat-packing step is
-required. The release's C<pvim> file is already the standalone distribution.
+Install the CPAN-format tarball with C<cpanm>, then run C<pvim file.pl> or C<pvim -v>.
+For the standalone download, save it as C<pvim>, run C<chmod +x pvim>, then
+C<./pvim file.pl>. Put it in a directory on PATH to call it as C<pvim> anywhere.
+The executable uses the Perl interpreter on PATH.
+The standalone route needs no root, compiler, make, module installation or
+separate fat-packing step. The release's C<pvim> file is already self-contained.
 See README.md and docs/TESTING.md for CI and human-test instructions.
 
 =head1 AUTHOR

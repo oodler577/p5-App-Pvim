@@ -4,7 +4,7 @@
 | --- | --- |
 | `Can't locate ... in @INC` at startup | Check that the host's complete Perl standard library is installed. A minimal binary may omit core packages. |
 | Interactive mode requires a POSIX tty | Run inside a terminal on Linux/macOS/WSL, not an output-only IDE panel, redirected pipe, or native Windows console. |
-| `Permission denied` launching the file | Use `perl /path/to/pvim-standalone.pl`; direct execution also needs `chmod +x`. |
+| `Permission denied` launching the file | Run `chmod +x /path/to/pvim`, then call `/path/to/pvim` directly. Check that Perl is on PATH and the filesystem permits execution. |
 | `Perl::Tidy is unavailable` | Optional formatter must be installed for the same interpreter. Ordinary editing does not need it. |
 | New file has no name | Save with `:w filename.pl`. |
 | Quit/open refuses unsaved changes | Save, undo back to the saved state, or intentionally use `:q!`, `:e!`, `:enew!`. |

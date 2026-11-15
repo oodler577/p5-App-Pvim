@@ -1,10 +1,10 @@
-pvim 0.1.5 removes syntax highlighting for now, so it does not delay editing or
-releases. The language lexer and syntax toggles/options are removed. File text is
-plain; optional yellow line numbers and terminal status styling remain.
+pvim 0.1.6 adds **pvim -v** as a version shortcut (an explicitly confirmed
+exception to Vim's flag semantics), while keeping --version.
 
-Perltidy, search/substitution, Vim-style shell execution/filter/read commands,
-Ctrl-Z/fg, undo/redo, the single-file download and App::Pvim CPAN packaging remain.
-The wiki and POD now describe highlighting as deferred rather than implemented.
+Opening splash text is centered horizontally and vertically, recenters on terminal
+resize/resume, and fits small terminals by removing spacers and clipping safely.
 
-Download **pvim-standalone.pl** to run directly, or use the GitHub release's
-**App-Pvim-0.1.5.tar.gz** with cpanm. No CPAN/PAUSE upload is performed.
+Help, POD, README, wiki, and CPAN-module documentation now show **pvim** as an
+executable command. Standalone instructions include chmod and direct invocation.
+The single-file runtime, plain-text display, yellow number gutter, shell tools,
+and App::Pvim CPAN packaging remain. No upload to PAUSE is performed.

@@ -5,7 +5,7 @@ release's prerelease flag/notes. The current documented version is @@VERSION@@.
 
 | Asset | Purpose |
 | --- | --- |
-| `pvim-standalone.pl` | Complete single-file editor, POD and CLI; run `perl pvim-standalone.pl file.pl` |
+| `pvim-standalone.pl` | Complete single-file editor, POD and CLI; install as executable `pvim` and run `pvim file.pl` |
 | `pvim` | Identical executable bytes under a short command name |
 | `pvim-@@VERSION@@.tar.gz` | Source, tests, tools, license texts and documentation |
 | `App-Pvim-@@VERSION@@.tar.gz` | CPAN-format source distribution for future App::Pvim publication |

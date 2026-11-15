@@ -1,19 +1,20 @@
 # CLI and batch mode
 
 ```text
-perl pvim-standalone.pl [--no-splash] [file]
-perl pvim-standalone.pl --help
-perl pvim-standalone.pl --manual
-perl pvim-standalone.pl --version
-perl pvim-standalone.pl --batch -c '%s/old/new/g' -c w file.pl
+pvim [--no-splash] [file]
+pvim --help
+pvim --manual
+pvim -v
+pvim --version
+pvim --batch -c '%s/old/new/g' -c w file.pl
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--help`, `-h` | Short usage |
 | `--manual` | Complete embedded POD, without needing perldoc |
-| `--version` | Editor and Perl versions |
-| `--no-splash` | Suppress unnamed-buffer startup splash |
+| `-v`, `--version` | Editor and Perl versions; `-v` is an explicitly confirmed exception to Vim |
+| `--no-splash` | Suppress the centered unnamed-buffer startup splash |
 | `--batch` | Run ex commands without opening a terminal |
 | `--command`, `-c` | Execute an ex command; repeat as needed |
 | `--` | End options before a filename beginning with `-` |
@@ -24,7 +25,7 @@ One file is accepted at a time. CLI commands run before interactive mode unless
 Batch example with a filename containing spaces:
 
 ```sh
-perl pvim-standalone.pl --batch -c '%s/old/new/g' -c w 'example script.pl'
+pvim --batch -c '%s/old/new/g' -c w 'example script.pl'
 ```
 
 **Writes are explicit.** Omitting `-c w` leaves the disk file unchanged even when
@@ -93,3 +94,7 @@ Examples on POSIX:
 [Vim reference: shell](https://vimhelp.org/various.txt.html#:!),
 [filter](https://vimhelp.org/change.txt.html#:range!),
 [read output](https://vimhelp.org/insert.txt.html#:r!).
+
+`pvim -v` intentionally prints the version by user request. Vim uses that flag
+for Vi mode; pvim retains `--version` as well. This exception does not change the
+general policy of following Vim semantics unless a divergence is confirmed.

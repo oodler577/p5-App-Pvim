@@ -24,13 +24,13 @@ Perl library; it does not embed a Perl interpreter or the optional formatter.
 mkdir -p "$HOME/.local/bin"
 curl -fL https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl -o "$HOME/.local/bin/pvim"
 chmod +x "$HOME/.local/bin/pvim"
-"$HOME/.local/bin/pvim" --version
+"$HOME/.local/bin/pvim" -v
 "$HOME/.local/bin/pvim" file.pl
 ```
 
 If `~/.local/bin` is in your PATH, run `pvim file.pl`. Otherwise use its full path,
-or add that directory to your shell's PATH configuration. You can always invoke
-an explicit interpreter: `perl "$HOME/.local/bin/pvim" file.pl`.
+or add that directory to your shell's PATH configuration. The executable selects
+the Perl interpreter on PATH through its shebang.
 
 ## Check downloads
 
@@ -38,7 +38,7 @@ Download `SHA256SUMS` alongside the exact release asset, then compare its entry:
 
 ```sh
 curl -fLO https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/SHA256SUMS
-sha256sum pvim-standalone.pl
+sha256sum "$HOME/.local/bin/pvim"
 ```
 
 For a full release directory containing all listed assets, `sha256sum -c SHA256SUMS`
@@ -57,7 +57,7 @@ To uninstall the example installation: `rm "$HOME/.local/bin/pvim"`.
 git clone git@github.com:oodler577/pvim.git
 cd pvim
 git checkout master
-perl pvim file.pl
+./pvim file.pl
 ```
 
 See [Perl Features](Perl-Features) for the optional formatter and
@@ -74,7 +74,7 @@ cd App-Pvim-@@VERSION@@
 perl Makefile.PL INSTALL_BASE="$HOME/.local/pvim"
 make test
 make install
-"$HOME/.local/pvim/bin/pvim" --version
+"$HOME/.local/pvim/bin/pvim" -v
 ```
 
 This needs make and standard Perl build tools. It requires no root and no

@@ -5,6 +5,7 @@ Supported controls are fully listed in [Command Reference](Command-Reference).
 
 | Area | Current behavior |
 | --- | --- |
+| Version flag | `pvim -v` prints the version; explicitly confirmed exception to Vim's Vi-mode flag |
 | Files | One active buffer; tabs and splits deferred |
 | Selection | No visual selection yet |
 | Operators | Repeated line operators and a limited same-line motion set |

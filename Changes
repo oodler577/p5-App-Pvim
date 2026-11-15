@@ -1,3 +1,9 @@
+0.1.6  2026-11-14
+     - added -v as a user-confirmed version shortcut alongside --version
+     - centered opening splash text horizontally and vertically, with live
+       resize/resume positioning and bounded layouts for small terminals
+     - updated POD, help, README and wiki to show pvim as an executable utility
+
 0.1.5  2026-11-14
      - removed syntax highlighting and its display-path lexer for now
      - removed syntax toggles/options; retained yellow line numbers and status styling

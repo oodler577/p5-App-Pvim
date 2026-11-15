@@ -40,7 +40,7 @@ cd App-Pvim-VERSION
 perl Makefile.PL INSTALL_BASE="$HOME/.local/pvim"
 make test
 make install
-"$HOME/.local/pvim/bin/pvim" --version
+"$HOME/.local/pvim/bin/pvim" -v
 ```
 
 The command requires only Perl 5.10+ with its standard library. Perl::Tidy remains

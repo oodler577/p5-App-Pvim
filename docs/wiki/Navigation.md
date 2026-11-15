@@ -35,3 +35,8 @@ interactive coverage is still pending.
 
 Syntax highlighting is deferred; file text is plain. Yellow line numbers and the
 status line remain available as terminal UI styling. See [Perl Features](Perl-Features).
+
+The opening splash is centered horizontally and vertically for the current
+terminal dimensions. It recenters immediately when resized, and after `fg`.
+On small terminals it removes blank spacers and clips lines within the available
+width; startup remains usable without printing beyond the screen edges.

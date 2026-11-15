@@ -19,10 +19,10 @@ PERL = os.environ.get('PVIM_PERL', 'perl')
 SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pvim'))
 
 class Session:
-    def __init__(self, *args):
+    def __init__(self, *args, rows=24, cols=80):
         self.master, self.slave = pty.openpty()
         self.before = termios.tcgetattr(self.slave)
-        fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack('HHHH', 24, 80, 0, 0))
+        fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack('HHHH', rows, cols, 0, 0))
         self.proc = subprocess.Popen([PERL, SCRIPT, *args], stdin=self.slave, stdout=self.slave, stderr=self.slave, preexec_fn=os.setpgrp)
         self.output = b''
         self.drain(0.25)
@@ -91,8 +91,8 @@ class TerminalTests(unittest.TestCase):
         if self.s:
             self.assertTrue(self.s.close(), 'terminal attributes restored')
         self.tmp.cleanup()
-    def start(self, *args):
-        self.s = Session(*args)
+    def start(self, *args, **kwargs):
+        self.s = Session(*args, **kwargs)
         self.assertIsNone(self.s.proc.poll(), self.s.output.decode(errors='replace'))
         return self.s
     def test_ctrl_z_preserves_insert_and_unsaved_text(self):
@@ -228,6 +228,30 @@ class TerminalTests(unittest.TestCase):
         self.assertIn(b'\x1b[1;1H\x1b[0mmy $x = "hello"; # comment\x1b[K', s.output)
         s.send(b':q\r')
         self.assertEqual(s.proc.wait(timeout=5), 0)
+    def assert_centered_splash(self, output, rows, cols):
+        frame = output.rsplit(b'\x1b[2J\x1b[H', 1)[1]
+        positions = re.findall(rb'\x1b\[(\d+);(\d+)H([^\x1b]*)', frame)
+        self.assertTrue(positions)
+        first = int(positions[0][0])
+        self.assertEqual(first, (rows-len(positions))//2+1)
+        for i, (row, col, text) in enumerate(positions):
+            self.assertEqual(int(row), first+i)
+            self.assertEqual(int(col), (cols-len(text))//2+1)
+            self.assertLessEqual(int(col)+len(text)-1, cols-1)
+            self.assertLessEqual(int(row), rows-1)
+        self.assertIn(b'pvim', positions[0][2])
+    def test_splash_centering_and_live_resize(self):
+        s = self.start(rows=24, cols=80)
+        self.assert_centered_splash(s.output,24,80)
+        for rows, cols in [(40,120),(10,30),(4,12)]:
+            fcntl.ioctl(s.slave, termios.TIOCSWINSZ, struct.pack('HHHH',rows,cols,0,0))
+            s.proc.send_signal(signal.SIGWINCH)
+            s.drain(0.2)
+            self.assert_centered_splash(s.output,rows,cols)
+            self.assertIsNone(s.proc.poll())
+        s.send(b' ')
+        s.send(b':q\r')
+        self.assertEqual(s.proc.wait(timeout=5),0)
     def test_splash_and_write(self):
         s = self.start()
         self.assertIn(b'Perl at the prompt', s.output)

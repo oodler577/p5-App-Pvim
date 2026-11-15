@@ -40,6 +40,7 @@ App::Pvim - install the portable Perl-centric pvim editor
 =head1 SYNOPSIS
 
   pvim file.pl
+  pvim -v
   pvim --help
   pvim --manual
 

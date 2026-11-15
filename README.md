@@ -8,21 +8,23 @@ An experimental human-testing release, inspired by the everyday command set in
 This is an independent implementation; no XVI2 code is included.
 
 ```sh
-perl pvim hello.pl
-perl pvim --help
-perl pvim --manual
+pvim hello.pl
+pvim -v
+pvim --help
+pvim --manual
 ```
 
-Copy `pvim` to a user-writable directory such as `~/.local/bin`, and optionally
-`chmod +x ~/.local/bin/pvim`. No root, build step, compiler, or CPAN installation.
+Install the CPAN-format release tarball with `cpanm`, or copy `pvim` to a
+user-writable directory such as `~/.local/bin` and run `chmod +x ~/.local/bin/pvim`.
+The standalone route needs no root, build step, compiler, or CPAN installation.
 The single file is already the standalone distribution: fat-packing adds nothing
 while its only required modules ship with full Perl 5.10+. Minimal distro Perl
 packages may split core modules into separate OS packages; see portability notes.
 
 Download the standalone file, source archive and checksums from
 [Releases](https://github.com/oodler577/pvim/releases). The clearly named
-`pvim-standalone.pl` asset is the same file and can be run with
-`perl pvim-standalone.pl file.pl`.
+`pvim-standalone.pl` asset is the same file. Save it as `pvim`, run
+`chmod +x pvim`, then `./pvim file.pl`, or place it on PATH and run `pvim file.pl`.
 
 [Wiki and quick start](https://github.com/oodler577/pvim/wiki) cover installation,
 controls, Perl features and troubleshooting. Wiki sources are maintained in
@@ -42,7 +44,8 @@ controls, Perl features and troubleshooting. Wiki sources are maintained in
 - `:! command` displays shell output; `:.! command` and `!!` filter the current
   line. `:2,10! command` / `:%! command` filter a range / file, and `:r !command`
   inserts output. Buffer edits are undoable; failed commands preserve text.
-- An unnamed startup shows a splash with provisional community-message text.
+- An unnamed startup shows centered splash text that recenters on terminal resize;
+  the community-message copy remains provisional.
 
 The embedded POD is the complete command and CLI reference. No tabs, splits,
 visual selection, dot-repeat, full Vim compatibility, or native Windows UI yet.
@@ -66,7 +69,7 @@ histories remain practical limits. Search/format/save are synchronous. Use a
 ## Automation and development
 
 ```sh
-perl pvim --batch -c '%s/old/new/g' -c w file.pl
+pvim --batch -c '%s/old/new/g' -c w file.pl
 prove -v t
 python3 tools/pty_test.py
 perl tools/benchmark.pl 128

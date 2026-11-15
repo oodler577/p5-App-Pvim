@@ -15,6 +15,16 @@ is(system($^X,$pvim,'--batch','-c','s/new/unsaved/',$file),0,'batch without writ
 open $f,'<',$file or die $!; is(<$f>,"new new\n",'batch never implicitly writes'); close $f;
 ok(system($^X,$pvim,'--batch','-c','s/[/bad/',$file)!=0,'invalid command nonzero');
 is(system($^X,$pvim,'--version'),0,'version');
+is(system($^X,$pvim,'-v'),0,'short version flag exits without a tty');
+require $pvim;
+my @banners;
+for my $option ('-v','--version') {
+    my $banner=''; my $status;
+    { local *STDOUT; open STDOUT,'>',\$banner or die $!; $status=main::run($option) }
+    is($status,0,"$option returns success"); push @banners,$banner;
+}
+is($banners[0],$banners[1],'short and long version output are identical');
+like($banners[0],qr/^pvim \Q$main::VERSION\E \(Perl [^)]+\)\n$/, 'version output contains editor and interpreter versions');
 is(system($^X,$pvim,'--help'),0,'help');
 is(system($^X,$pvim,'--manual'),0,'manual without perldoc');
 # Invoke via pipe so accidental interactive startup fails promptly.

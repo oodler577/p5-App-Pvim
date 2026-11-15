@@ -37,7 +37,7 @@ Optional user-local installation with an existing cpanminus:
 
 ```sh
 cpanm --local-lib "$HOME/perl5" Perl::Tidy
-PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:$PERL5LIB}" perl pvim-standalone.pl file.pl
+PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:$PERL5LIB}" pvim file.pl
 ```
 
 Formatting uses `-npro -l=500`, ignores perltidy profiles, forms one undo unit,

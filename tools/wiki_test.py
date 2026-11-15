@@ -30,6 +30,10 @@ class WikiTests(unittest.TestCase):
         first = {p.name:p.read_bytes() for p in out.iterdir()}
         self.assertEqual(len([p for p in first if p.endswith('.md')]), 22)
         self.assertNotIn(b'@@', first['Home.md'])
+        for name, content in first.items():
+            if name.endswith('.md'):
+                self.assertNotIn(b'perl pvim', content, name)
+        self.assertIn(b'pvim -v', first['Full-Manual.md'])
         self.assertIn(b':%s/hello/world/g', first['Quick-Start.md'])
         self.assertIn(b'--no-splash', first['Full-Manual.md'])
         self.generate(out)

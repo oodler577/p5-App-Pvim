@@ -30,3 +30,9 @@
 - Syntax highlighting is deferred by user request. Keep file text plain and do not
   reintroduce a lexer or make highlighting a release requirement unless requested.
   The yellow number gutter and status styling are intentional terminal UI features.
+
+- Confirmed Vim exception: `pvim -v` prints the version, alongside `--version`.
+- Show pvim as an executable utility in all user-facing examples (`pvim`,
+  `./pvim` or its installed full path), without a `perl` command prefix. Standalone
+  instructions must include chmod and PATH/full-path guidance. Internal tests and
+  build probes may invoke explicit interpreters to validate portability.

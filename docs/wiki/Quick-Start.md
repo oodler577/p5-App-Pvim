@@ -4,17 +4,27 @@ On a Linux system with a full Perl 5.10+ installation, including Debian with Per
 5.40, open a shell inside your usual terminal emulator. macOS and WSL also provide
 suitable POSIX environments. Native Windows interactive mode is pending.
 
-Download the standalone Perl file into a writable directory:
+Install the release with cpanm, then use the command directly:
 
 ```sh
-curl -fL https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl -o pvim-standalone.pl
-perl pvim-standalone.pl --version
-perl pvim-standalone.pl practice.pl
+cpanm https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/App-Pvim-@@VERSION@@.tar.gz
+pvim -v
+pvim practice.pl
+```
+
+For the standalone route, no build/install step is needed:
+
+```sh
+curl -fL https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl -o pvim
+chmod +x pvim
+./pvim -v
+./pvim practice.pl
 ```
 
 If curl is unavailable, download [pvim-standalone.pl](https://github.com/oodler577/pvim/releases/download/v@@VERSION@@/pvim-standalone.pl)
-in a browser and run `perl /path/to/pvim-standalone.pl practice.pl`.
-The older `pvim` asset is the same executable content under a shorter name.
+in a browser, save it as `pvim`, make it executable, and run `./pvim practice.pl`.
+Put it in a directory on PATH to invoke it as `pvim` from anywhere. The `pvim`
+release asset contains the same executable bytes.
 
 1. Press `i` to enter insert mode.
 2. Type `use strict;`, press Enter, and type `print "hello\n";`.
@@ -23,8 +33,8 @@ The older `pvim` asset is the same executable content under a shorter name.
 5. Type `:q` and press Enter to quit.
 6. Back in the shell, run `perl practice.pl`.
 
-To start without a filename, use `perl pvim-standalone.pl`. The provisional splash
-appears; press any key to dismiss it. That key is consumed by the splash. Press `i`
+To start without a filename, use `pvim` (or `./pvim` in the download directory). The provisional splash
+appears, centered horizontally and vertically; press any key to dismiss it. That key is consumed by the splash. Press `i`
 again to begin inserting. Save an unnamed buffer using `:w practice.pl`.
 
 Useful first experiments:
