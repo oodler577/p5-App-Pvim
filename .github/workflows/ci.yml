@@ -33,8 +33,15 @@ jobs:
           prove -v t
           perl tools/pipe_test.pl
       - name: Install POSIX author test dependency
+        timeout-minutes: 10
         if: runner.os != 'Windows'
-        run: cpanm --notest Test::More IO::Pty
+        run: |
+          for pvim_attempt in 1 2 3; do
+            if cpanm --mirror https://cpan.metacpan.org --mirror-only --notest Test::More IO::Pty; then
+              exit 0
+            fi
+          done
+          exit 1
       - name: POSIX terminal integration
         timeout-minutes: 3
         if: runner.os != 'Windows'
