@@ -1,0 +1,20 @@
+name: Stop stalled stdin verification
+on:
+  push:
+    paths: ['.github/workflows/stop-stalled.yml']
+permissions:
+  actions: write
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            for (const run_id of [43678234469, 43678235275]) {
+              const {data: run} = await github.rest.actions.getWorkflowRun({...context.repo, run_id});
+              if (run.status !== 'completed') {
+                await github.rest.actions.cancelWorkflowRun({...context.repo, run_id});
+                core.info(`Cancelled stalled verification ${run_id}`);
+              }
+            }
