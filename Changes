@@ -1,4 +1,5 @@
 0.1.13  2026-11-15
+     - captured and checked expected CLI diagnostics to keep test output clean
      - kept real-pipe coverage on old native Windows Perls using a Perl argv
        helper where list-form pipe opens are unavailable
 
