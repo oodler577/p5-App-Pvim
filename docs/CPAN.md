@@ -69,8 +69,11 @@ The CPAN tarball is published as a GitHub asset for review and future use.
 
 ## Archive policy and POD
 
-`GatherDir` allows the runtime, release/license files, author configuration and
-source subtrees, with explicit cache/backup/build exclusions. CI seeds unwanted
+`GatherDir` keeps the runtime, README, Changes, licenses, consumer tests,
+`dist.ini` and its local build plugin. The installed script, metadata module,
+Makefile.PL, MANIFEST and META files are generated during the build.
+`tools/` and `docs/` stay in the repository and are excluded from the CPAN kit.
+The full manual remains embedded in the executable and supplies `man pvim`. CI seeds unwanted
 root, log and cache files before building, then audits the actual kit against
 an independent member allowlist and MANIFEST. It checks metadata, Perl licensing,
 core-only runtime prerequisites, identical generated runtime and valid POD in

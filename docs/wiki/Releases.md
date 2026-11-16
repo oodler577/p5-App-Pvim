@@ -33,7 +33,7 @@ releases as prereleases for human testing. The wiki follows `master`, with its
 version shown at publication; for an older release use that tag's embedded manual
 and source archive. See [Documentation Maintenance](Documentation-Maintenance).
 
-## App::Pvim on CPAN: prepared, not uploaded
+## App::Pvim distribution and PAUSE publication
 
 The repository now contains `dist.ini`. Run `dzil build` and `dzil test` with
 Dist::Zilla on the author machine. A local author plugin generates the CPAN
@@ -49,6 +49,30 @@ CI builds/tests the CPAN tarball and installs it into a user-local prefix. GitHu
 releases include it and checksum it alongside the standalone download. These jobs
 never publish to PAUSE. A future `dzil release` requires intentional authorization
 and confirmed PAUSE namespace permissions; it is not part of ordinary maintenance.
+
+### Trimmed CPAN archive
+
+The CPAN kit includes the runtime, generated installed command and App::Pvim
+module, seven consumer test files, README, Changes, licenses, metadata,
+Makefile.PL, dist.ini and its local build plugin. The root pvim copy remains
+because the tests and author plugin use it.
+
+Author tools and docs/wiki sources stay in Git; tools/ and docs/ are excluded
+from the CPAN tarball. The full command manual is embedded in pvim and installs
+as man pvim. Dist::Zilla and Moose are not consumer requirements.
+
+After rebuilding, inspect the actual archive with tar -tzf; extracting over an
+old directory does not remove stale files. Test from a fresh extraction with:
+
+```sh
+perl Makefile.PL
+make test
+```
+
+The trimmed 0.1.13 kit passed the author's Perl 5.40.0 installation test: seven
+test files and 2,725 checks, with clean test output. Optional Perl::Tidy coverage
+can change the check count between machines. This verifies the kit; it does not
+indicate that a PAUSE upload has occurred.
 
 For single-file use, continue downloading `pvim-standalone.pl`; nothing needs to
 be installed from CPAN. [Repository CPAN notes](https://github.com/oodler577/pvim/blob/master/docs/CPAN.md).

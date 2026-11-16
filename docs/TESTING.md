@@ -34,6 +34,17 @@ CI runs the full Perl suite on Linux/macOS/Windows and Perl 5.10, 5.16, 5.24,
 separate tidy integration job. Release publishing depends on all test jobs.
 Exact tested platform outcomes are recorded in PORTABILITY.md after the first run.
 
+## Trimmed CPAN kit
+
+Test the actual archive from a fresh extraction with `perl Makefile.PL` and
+`make test`. The author reported all seven test files and 2,725 checks passing
+for the trimmed 0.1.13 kit on Perl 5.40.0. Optional Perl::Tidy tests can make
+counts differ between machines. Expected CLI errors are captured and asserted
+without printing diagnostics into a successful test run.
+
+Author harnesses remain available in Git even though `tools/` and `docs/` are
+excluded from the CPAN archive. Consumers run the included `t/` suite.
+
 ## Human testing checklist
 
 Use disposable copies of real Perl sources for initial testing.
